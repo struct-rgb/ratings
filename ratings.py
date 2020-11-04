@@ -172,18 +172,9 @@ PREDICATES["eval"] = Predicate(
 #
 #
 
-class InvalidEnumerationError(Exception):
-	pass
-
 def create_rating_filter(filter_tab):
 
 	search         = filter_tab.search
-	score          = filter_tab.score
-	recommendation = filter_tab.recommendation
-	status         = filter_tab.status
-	maximum        = filter_tab.maximum
-	exact          = filter_tab.exact
-	minimum        = filter_tab.minimum
 
 	if   search == Search.COMMENTS:
 		criterion = filter_tab.query.lower()
@@ -195,24 +186,6 @@ def create_rating_filter(filter_tab):
 		pass
 
 	def function(rating):
-
-		# if score != Score.NO_FILTER:
-		# 	if   minimum and rating.score <  score:
-		# 		return False
-		# 	elif exact   and rating.score != score:
-		# 		return False
-		# 	elif maximum and rating.score >  score:
-		# 		return False
-		# 	else:
-		# 		pass
-
-		# if recommendation != Recommendation.NO_FILTER:
-		# 	if rating.recommendation != recommendation:
-		# 		return False
-
-		# if status != Status.NO_FILTER:
-		# 	if rating.status != status:
-		# 		return False
 
 		if   search == Search.COMMENTS:
 			if rating.comments.lower().find(criterion) == -1:
@@ -259,19 +232,12 @@ class FilterTab(object):
 		self._tags_ascending  = builder.get_object("filter_tags_ascending")
 		self._tags_descending = builder.get_object("filter_tags_descending")
 		self._sort            = builder.get_object("filter_sort_combobox")
-		self._score           = builder.get_object("filter_score_combobox")
-		self._recommendation  = builder.get_object("filter_recommend_combobox")
-		self._status          = builder.get_object("filter_status_combobox")
 
 		self._query           = builder.get_object("search_entry")
 		self._tags_query      = builder.get_object("tagging_search_entry")
 
 		self._ascending       = builder.get_object("filter_ascending")
 		self._descending      = builder.get_object("filter_descending")
-
-		self._minimum         = builder.get_object("filter_minimum")
-		self._exact           = builder.get_object("filter_exact")
-		self._maximum         = builder.get_object("filter_maximum")
 
 		self.model            = model
 
@@ -281,9 +247,6 @@ class FilterTab(object):
 	def reset(self):
 		self.search         = Search.TITLE
 		self.sort           = Sort.TITLE
-		self.score          = Score.NO_FILTER
-		self.recommendation = Recommendation.NO_FILTER
-		self.status         = Status.NO_FILTER
 
 	def reset_tags(self):
 		self.tags_search    = Search.TITLE
@@ -323,7 +286,7 @@ class FilterTab(object):
 				y = userdata[model.get(b, 1)].title
 				return 1 if x > y else -1 if x < y else 0
 		else:
-			raise InvalidEnumerationError('Enum value "%s" unknown for Sort' % sort)
+			raise ValueError('Enum value "%s" unknown for Sort' % sort)
 
 		tree_sortable.set_sort_func(1, sort_func, self.model.ratings)
 
@@ -389,30 +352,6 @@ class FilterTab(object):
 	@descending.setter
 	def tags_descending(self, value):
 		self._tags_descending.set_active(value)
-
-	@property
-	def minimum(self):
-		return self._minimum.get_active()
-
-	@minimum.setter
-	def minimum(self, value):
-		self._minimum.set_active(value)
-
-	@property
-	def exact(self):
-		return self._exact.get_active()
-
-	@exact.setter
-	def exact(self, value):
-		self._exact.set_active(value)
-
-	@property
-	def maximum(self):
-		return self._maximum.get_active()
-
-	@maximum.setter
-	def maximum(self, value):
-		self._maximum.set_active(value)
 	
 	@property
 	def search(self):
@@ -437,30 +376,6 @@ class FilterTab(object):
 	@sort.setter
 	def sort(self, value):
 		self._sort.set_active_id(str(value.value))
-
-	@property
-	def score(self):
-		return Score(int(self._score.get_active_id()))
-
-	@score.setter
-	def score(self, value):
-		self._score.set_active_id(str(value.value))
-
-	@property
-	def recommendation(self):
-		return Recommendation(int(self._recommendation.get_active_id()))
-
-	@recommendation.setter
-	def recommendation(self, value):
-		self._recommendation.set_active_id(str(value.value))
-
-	@property
-	def status(self):
-		return Status(int(self._status.get_active_id()))
-
-	@status.setter
-	def status(self, value):
-		self._status.set_active_id(str(value.value))
 
 class EditorTab(object):
 

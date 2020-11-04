@@ -21,7 +21,6 @@ class Score(IntEnum):
 	GREAT         = 8
 	AWESOME       = 9
 	FANTASTIC     = 10
-	NO_FILTER     = 11
 
 @unique
 class Recommendation(IntEnum):
@@ -31,7 +30,6 @@ class Recommendation(IntEnum):
 	MAYBE       = 3
 	HESITANTLY  = 2
 	NEVER       = 1
-	UNSPECIFIED = 0
 
 @unique
 class Status(IntEnum):
@@ -42,8 +40,7 @@ class Status(IntEnum):
 	COMPLETED   = 4
 	VIEW_AGAIN  = 5
 	REVIEWING   = 6
-	NO_FILTER   = 7
-
+	
 class Tag(object):
 
 	def __init__(self,
