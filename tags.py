@@ -2,7 +2,7 @@
 from sys import argv
 from enum import Enum
 
-from typing import Dict, List, Callable, Optional, Tuple, Any, Type, TypeVar, Union, cast
+from typing import Dict, Generic, List, Callable, Optional, Tuple, Any, Type, TypeVar, Union, cast
 
 class ASTType(Enum):
 	AND   = ","
@@ -641,7 +641,7 @@ class Predicate(object):
 	# key for default predicate in symbol table
 	DEFAULT = ""
 
-	def __init__(self, name: str = "", action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
+	def __init__(self, name, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
 		self.action  = action
 		self.parser  = parser
 		self.pure    = pure
@@ -649,22 +649,6 @@ class Predicate(object):
 
 	def __call__(self, subject: Any, userdata: Any) -> bool:
 		return self.action(subject, userdata)
-
-# class PredicateTable(object):
-
-# 	def __init__(self, default_action, default_parser=str):
-
-# 		self.predicates = {
-# 			Predicate.DEFAULT: Predicate(
-# 				Predicate.DEFAULT,
-# 				action=default_action,
-# 				parser=default_parser,
-# 			)
-# 		}
-
-# 	def add_predicate(name: str = "", action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
-
-# 		self.predicates[name] = Predicate(name, action, parser, pure)
 
 PredicateInstance = Tuple[Callable[[Any, Any], bool], Any]
 CodeList          = List[Union[ASTType, PredicateInstance]]
@@ -876,6 +860,31 @@ def enum_subject_parser_factory(enum: Type[T]) -> Callable[[str], T]:
 
 		return subject
 	return parser
+
+O = TypeVar("O")
+
+class Box(Generic[O]):
+	"""
+	A container than can be used to maintain state between filter invocations.
+
+	Most predicates that take a Box as a predicate will be impure predicates and
+	as such should also take pure=False in their constructor.
+	"""
+
+	def __init__(self, obj: O):
+		self.value = obj
+
+	@staticmethod
+	def parser_factory(parser: Callable[[str], Any]) -> Callable[[str], "Box[O]"]:
+		"""
+		A conveniance function for generating a new parser function that
+		automatically wraps the return value of a subject parser in a Box.
+		"""
+
+		def wrapper(subject: str) -> "Box[O]":
+			return Box(parser(subject))
+
+		return wrapper
 
 def main():
 	for argument in argv[1:]:

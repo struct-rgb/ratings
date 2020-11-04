@@ -1,17 +1,18 @@
 #!/usr/bin/python3
 
+import re
 import json
 import random
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Tuple
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-from tags import Filter, Predicate, CompilationError, escape, tokenize, enum_subject_parser_factory, TERMINALS, compile
+from tags import Filter, Predicate, Box, CompilationError, escape, tokenize, enum_subject_parser_factory, TERMINALS, compile
 from model import Search, Sort, Score, Recommendation, Status, Page, Tag, Rating, Model
 
 #
@@ -42,6 +43,9 @@ def action_status_eq(status: Status, rating: Rating) -> bool:
 
 def parser_random(string: str) -> float:
 
+	if string == 'nan':
+		raise ValueError("percentage cannot be nan")
+
 	percent = float(string)
 
 	if percent < 0.0 or 100.0 < percent:
@@ -50,7 +54,7 @@ def parser_random(string: str) -> float:
 	return percent
 
 def action_random(percent: float, ignore: Any) -> bool:
-	return random.random() * 100 <= percent 
+	return random.random() * 100 <= percent
 
 PREDICATES = {
 	
@@ -100,9 +104,51 @@ PREDICATES = {
 		action=action_random,
 		parser=parser_random,
 		pure=False,
-	)
-
+	),
 }
+
+count_pattern = re.compile(r"^(\d+)\s+of\s+(.*)$")
+
+def parser_count(string: str) -> Tuple[Box[int], Callable[[Any], bool]]:
+
+	items = count_pattern.fullmatch(string)
+
+	if not items:
+		raise ValueError(f"subject {string} is not of the form: <number> of <expression>")
+
+	integer = int(items[1])
+
+	if integer < 0:
+		raise ValueError(f"counting must begin from 0 or greater, not {integer}")
+
+	try:
+		subroutine = Filter(items[2], PREDICATES)
+	except CompilationError as e:
+		# intercept the error and change the source
+		# to the source that we're trying to compile
+		e.reason = "in quotation: " + e.reason
+		e.source = source
+		raise e
+
+	return (Box(integer), subroutine)
+
+def action_count(subject: Tuple[Box[int], Callable[[Any], bool]], rating: Rating) -> bool:
+
+	integer, subroutine = subject
+
+	if integer.value != 0 and subroutine(rating):
+		integer.value -= 1
+		return True
+	
+	return False
+
+# return true a specified number of times
+PREDICATES["count"] = Predicate(
+		"count",
+		action=action_count,
+		parser=parser_count,
+		pure=False,
+)
 
 def parser_eval(source):
 	try:
@@ -110,9 +156,11 @@ def parser_eval(source):
 	except CompilationError as e:
 		# intercept the error and change the source
 		# to the source that we're trying to compile
+		e.reason = "in quotation: " + e.reason
 		e.source = source
 		raise e
 
+# evaluate a quotation
 PREDICATES["eval"] = Predicate(
 	"eval",
 	action=lambda filterer, rating: filterer(rating), 
