@@ -24,12 +24,12 @@ class Score(IntEnum):
 
 @unique
 class Recommendation(IntEnum):
-	NO_FILTER   = 6
 	DEFINITELY  = 5
 	PROBABLY    = 4
 	MAYBE       = 3
 	HESITANTLY  = 2
 	NEVER       = 1
+	UNSPECIFIED = 0
 
 @unique
 class Status(IntEnum):
@@ -40,7 +40,7 @@ class Status(IntEnum):
 	COMPLETED   = 4
 	VIEW_AGAIN  = 5
 	REVIEWING   = 6
-	
+
 class Tag(object):
 
 	def __init__(self,
