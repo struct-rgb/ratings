@@ -245,7 +245,7 @@ ILLEGAL_AFTER_VALUE = {
 
 ESCAPE_CHARACTER = "\\"
 
-# QUOTE_CHARACTERS = {"\"", "\'"}
+QUOTE_CHARACTERS = {"\"", "\'"}
 
 SPECIAL = WHITESPACE | TERMINALS | {ESCAPE_CHARACTER}
 
@@ -314,58 +314,58 @@ def eat_whitespace(source: str, position: int = 0) -> int:
 
 	return position
 
-# def eat_quote(quote: str, source: str, position: int = 0) -> Tuple[int, int, str]:
+def eat_quote(quote: str, source: str, position: int = 0) -> Tuple[int, int, str]:
 
-# 	# this algorithm doesn't work otherwise
-# 	assert len(quote) == 1
+	# this algorithm doesn't work otherwise
+	assert len(quote) == 1
 
-# 	token     = list()
-# 	start     = position
-# 	quote_max = 0
-# 	quote_len = 0
+	token     = list()
+	start     = position
+	quote_max = 0
+	quote_len = 0
 
-# 	while position < len(source) and source[position] == quote:
-# 		quote_max += 1
-# 		position  += 1
+	while position < len(source) and source[position] == quote:
+		quote_max += 1
+		position  += 1
 
-# 	# we must have at least one quote to end the quotation
-# 	assert quote_max >= 1
+	# we must have at least one quote to end the quotation
+	assert quote_max >= 1
 
-# 	while position < len(source):
+	while position < len(source):
 		
-# 		if source[position] == quote:
-# 			quote_len += 1
-# 			position  += 1
+		if source[position] == quote:
+			quote_len += 1
+			position  += 1
 
-# 			if quote_len == quote_max:
-# 				return start, position, "".join(token)
+			if quote_len == quote_max:
+				return start, position, "".join(token)
 			
-# 		else:
-# 			# append any quotes we've skipped
-# 			token.append(quote * quote_len)
-# 			quote_len = 0
+		else:
+			# append any quotes we've skipped
+			token.append(quote * quote_len)
+			quote_len = 0
 
-# 			# append the current character
-# 			token.append(source[position])
-# 			position += 1
+			# append the current character
+			token.append(source[position])
+			position += 1
 
-# 			# # check to see if we should escape this character
-# 			# if source[position] == ESCAPE_CHARACTER:
-# 			# 	# skip the escape character
-# 			# 	position += 1
-# 			# 	if position < len(source):
-# 			# 		token.append(source[position])
-# 			# 		position += 1
-# 			# else:
-# 			# 	# append the current character
-# 			# 	token.append(source[position])
-# 			# 	position += 1
+			# # check to see if we should escape this character
+			# if source[position] == ESCAPE_CHARACTER:
+			# 	# skip the escape character
+			# 	position += 1
+			# 	if position < len(source):
+			# 		token.append(source[position])
+			# 		position += 1
+			# else:
+			# 	# append the current character
+			# 	token.append(source[position])
+			# 	position += 1
 
-# 	raise CompilationError(
-# 		"unclosed quotation",
-# 		position=start,
-# 		source=source,
-# 	)
+	raise CompilationError(
+		"unclosed quotation",
+		position=start,
+		source=source,
+	)
 
 def tokenize(source: str, position: int = 0) -> List[Tuple[int, str]]:
 
