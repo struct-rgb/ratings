@@ -44,11 +44,11 @@ class Status(IntEnum):
 class Tag(object):
 
 	def __init__(self,
-		idnum=-1,
-		instances=1,
-		name="unnamed",
-		description="",
-		from_record=None,
+		idnum:       int  = -1,
+		instances:   int  = 1,
+		name:        str  = "unnamed",
+		description: str  = "",
+		from_record: bool = None,
 	):
 		if from_record is not None:
 			self.idnum       = from_record["idnum"]
@@ -109,7 +109,7 @@ class Rating(object):
 			"tags"           : list(self.tags)
 		}
 
-	def __repr__(self):
+	def __repr__(self) -> str:
 		return "%i, %s, %s, %s, %s, %s, %s" % (
 			self.idnum,
 			self.title,
