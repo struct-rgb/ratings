@@ -17,11 +17,14 @@ class ASTType(Enum):
 	NONE  = " "
 	TRUE  = "T"
 	PRED  = ":"
+	STAT  = ";"
 
 """
 count: 10 of ""science fiction, ~japanese animation | fantasy""
 
 count: 10 of "count: 20 of 'fantasy, ~isekai'"
+
+count: 10 of #{count: 20 of #{fantasy, ~isekai}}
 
 limit: 10 {science fiction, ~japanese animation | fantasy}
 
@@ -31,7 +34,18 @@ inspect: genre {fantasy, ~isekai}
 
 genre <Rating: Bleach> True
 
-assert: Bleach {fantasy, ~isekai}
+count: Bleach {fantasy, ~isekai}
+
+eval: fantasy\, \~isekai
+
+eval: {fantasy, \~isekai}
+
+eval: #{fantasy, ~isekai}
+
+pragma: sort;
+
+order: recommendation;
+
 """
 
 class Pair(object):
@@ -235,6 +249,7 @@ TERMINALS = {
 	ASTType.MI.value,
 	ASTType.EQV.value,
 	ASTType.PRED.value,
+	ASTType.STAT.value,
 }
 
 ILLEGAL_AFTER_VALUE = {
@@ -243,9 +258,11 @@ ILLEGAL_AFTER_VALUE = {
 	ASTType.PRED.value,
 }
 
-ESCAPE_CHARACTER = "\\"
+ESCAPE_CHARACTER = "%"
 
-QUOTE_CHARACTERS = {"\"", "\'"}
+QUOTE_CHARACTER  = "#"
+
+# QUOTE_CHARACTERS = {"\"", "\'"}
 
 SPECIAL = WHITESPACE | TERMINALS | {ESCAPE_CHARACTER}
 
@@ -314,58 +331,103 @@ def eat_whitespace(source: str, position: int = 0) -> int:
 
 	return position
 
-def eat_quote(quote: str, source: str, position: int = 0) -> Tuple[int, int, str]:
+def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
 
-	# this algorithm doesn't work otherwise
-	assert len(quote) == 1
+	start = position
 
-	token     = list()
-	start     = position
-	quote_max = 0
-	quote_len = 0
+	assert position < len(source) and source[position] == QUOTE_CHARACTER
+	position += 1
 
-	while position < len(source) and source[position] == quote:
-		quote_max += 1
-		position  += 1
+	if position == len(source) or source[position] != ASTType.BEGIN.value:
+		return (start, position, QUOTE_CHARACTER)
+	else:
+		position += 1
 
-	# we must have at least one quote to end the quotation
-	assert quote_max >= 1
+	depth = 1
+	token = list()
 
 	while position < len(source):
-		
-		if source[position] == quote:
-			quote_len += 1
-			position  += 1
 
-			if quote_len == quote_max:
+		character = source[position]
+
+		if   character == ASTType.BEGIN.value:
+			depth += 1
+		elif character == ASTType.END.value:
+			depth -= 1
+
+			if depth == 0:
 				return start, position, "".join(token)
-			
-		else:
-			# append any quotes we've skipped
-			token.append(quote * quote_len)
-			quote_len = 0
-
-			# append the current character
-			token.append(source[position])
+		elif character == ESCAPE_CHARACTER:
+			# skip the escape character
 			position += 1
-
-			# # check to see if we should escape this character
-			# if source[position] == ESCAPE_CHARACTER:
-			# 	# skip the escape character
-			# 	position += 1
-			# 	if position < len(source):
-			# 		token.append(source[position])
-			# 		position += 1
-			# else:
-			# 	# append the current character
-			# 	token.append(source[position])
-			# 	position += 1
+			if position >= len(source):
+				break
+			else:
+				character = source[position]
+	
+		token.append(character)
+		position += 1
 
 	raise CompilationError(
 		"unclosed quotation",
 		position=start,
 		source=source,
 	)
+
+# def eat_quote(quote: str, source: str, position: int = 0) -> Tuple[int, int, str]:
+
+# 	# this algorithm doesn't work otherwise
+# 	assert len(quote) == 1
+
+# 	token: List[str]
+
+# 	token     = list()
+# 	start     = position
+# 	quote_max = 0
+# 	quote_len = 0
+
+# 	while position < len(source) and source[position] == quote:
+# 		quote_max += 1
+# 		position  += 1
+
+# 	# we must have at least one quote to end the quotation
+# 	assert quote_max >= 1
+
+# 	while position < len(source):
+		
+# 		if source[position] == quote:
+# 			quote_len += 1
+# 			position  += 1
+
+# 			if quote_len == quote_max:
+# 				return start, position, "".join(token)
+			
+# 		else:
+# 			# append any quotes we've skipped
+# 			token.append(quote * quote_len)
+# 			quote_len = 0
+
+# 			# append the current character
+# 			token.append(source[position])
+# 			position += 1
+
+# 			# # check to see if we should escape this character
+# 			# if source[position] == ESCAPE_CHARACTER:
+# 			# 	# skip the escape character
+# 			# 	position += 1
+# 			# 	if position < len(source):
+# 			# 		token.append(source[position])
+# 			# 		position += 1
+# 			# else:
+# 			# 	# append the current character
+# 			# 	token.append(source[position])
+# 			# 	position += 1
+
+# 	raise CompilationError(
+# 		"unclosed quotation",
+# 		position=start,
+# 		source=source,
+# 	)
 
 def tokenize(source: str, position: int = 0) -> List[Tuple[int, str]]:
 
@@ -447,15 +509,17 @@ class CompilationError(Exception):
 
 GRAMMAR = \
 """
-<program>  ::= <expr>
-<expr>     ::= <eqv-expr>
-<eqv-expr> ::= <eqv-expr> "=" <mi-expr>  | <mi-expr>
-<mi-expr>  ::= <mi-expr>  "?" <or-expr>  | <or-expr>
-<or-expr>  ::= <or-expr>  "|" <xor-expr> | <xor-expr>
-<xor-expr> ::= <xor-expr> "^" <and-expr> | <and-expr>
-<and-expr> ::= <and-expr> "," <not-expr> | <not-expr>
-<not-expr> ::= "~" <value> | <value>
-<value>    ::= "{" <expr> "}" | <tag> | <tag> ":" <tag>
+<program>   ::= <expr>
+<expr>      ::= <eqv-expr>
+<eqv-expr>  ::= <eqv-expr> "=" <mi-expr>  | <mi-expr>
+<mi-expr>   ::= <mi-expr>  "?" <or-expr>  | <or-expr>
+<or-expr>   ::= <or-expr>  "|" <xor-expr> | <xor-expr>
+<xor-expr>  ::= <xor-expr> "^" <and-expr> | <and-expr>
+<and-expr>  ::= <and-expr> "," <not-expr> | <not-expr>
+<not-expr>  ::= "~" <value> | <value>
+<value>     ::= <sub-expr> | <predicate> | <tag>
+<sub-expr>  ::= "{" <expr> "}"
+<predicate> ::= <tag> ":" <sub-expr> | <tag> ":" <tag> | <tag> ":" <tag> <sub-expr>
 """
 
 def binary_operator_parser_factory(operator_terminal: ASTType, operand_parser: Callable[[ParserState], Optional[Pair]]) -> Callable[[ParserState], Optional[Pair]]:
@@ -528,7 +592,7 @@ def parse_value_nesting(state: ParserState) -> Optional[Pair]:
 		state.to_next()
 	
 	state.sink()
-	pair = parse_eqv_expression(state)
+	pair = parse_stat_expression(state)
 	if pair is None: return pair
 	state.swim()
 
@@ -643,7 +707,7 @@ def parse_not_case(state: ParserState) -> Optional[Pair]:
 	"""
 	Parses the negation case of a not expression
 
-	"~"" <value>
+	"~" <value>
 	"""
 
 	if  state.token != ASTType.NOT.value:
@@ -697,15 +761,27 @@ parse_eqv_expression = binary_operator_parser_factory(
 	parse_mi_expression,
 )
 
+parse_stat_expression = binary_operator_parser_factory(
+	ASTType.STAT,
+	parse_eqv_expression,
+)
+
 def parse(tokens: List[Tuple[int, str]]) -> Optional[Pair]:
 	state = ParserState(tokens)
-	return parse_eqv_expression(state)
+	return parse_stat_expression(state)
 
 #
 # Codegen
 #
 
-BINARY_OPERATORS = {ASTType.OR, ASTType.XOR, ASTType.AND, ASTType.MI, ASTType.EQV}
+BINARY_OPERATORS = {
+	ASTType.OR,
+	ASTType.XOR,
+	ASTType.AND,
+	ASTType.MI,
+	ASTType.EQV,
+	ASTType.STAT,
+}
 
 class Predicate(object):
 
@@ -720,6 +796,33 @@ class Predicate(object):
 
 	def __call__(self, subject: Any, userdata: Any) -> bool:
 		return self.action(subject, userdata)
+
+
+class PredicateDefinitions(Dict[str, Predicate]):
+
+	def __init__(self, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
+		super()
+
+		# initialize default predicate
+		self.default(action=action, parser=parser, pure=pure)
+		
+	def define(self, name, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
+
+		self[name] = Predicate(name, action=action, parser=parser, pure=pure)
+
+		return self
+
+	def default(self, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
+
+		self.define(Predicate.DEFAULT, action=action, parser=parser, pure=pure)
+
+		return self
+
+	def alias(original, duplicate):
+
+		self[duplicate] = self[original]
+
+		return self
 
 PredicateInstance = Tuple[Callable[[Any, Any], bool], Any]
 CodeList          = List[Union[ASTType, PredicateInstance]]
@@ -855,6 +958,11 @@ def operator_true(stack: List[bool]) -> None:
 def operator_not(stack: List[bool]) -> None:
 	stack.append(not stack.pop())
 
+def operator_statement(stack: List[bool]) -> None:
+	a = stack.pop()
+	b = stack.pop()
+	stack.append(a)
+
 class Filter(object):
 
 	DISPATCH_TABLE = {
@@ -865,6 +973,7 @@ class Filter(object):
 		ASTType.MI   : operator_mi,
 		ASTType.EQV  : operator_eqv,
 		ASTType.TRUE : operator_true,
+		ASTType.STAT : operator_statement,
 	}
 
 	def __init__(self, source: Union[CodeList, str], symbols: Dict[str, Predicate]):
@@ -897,6 +1006,10 @@ class Filter(object):
 		
 T = TypeVar('T', bound=Enum)
 
+ESPF_MAP = {
+	ord(" "): ord("_")
+}
+
 def enum_subject_parser_factory(enum: Type[T]) -> Callable[[str], T]:
 	def parser(string: str) -> T:
 		# try to parse it as an integer
@@ -919,7 +1032,7 @@ def enum_subject_parser_factory(enum: Type[T]) -> Callable[[str], T]:
 		else:
 			# then it's a string
 			try:
-				subject = enum[string.upper()]
+				subject = enum[string.translate(ESPF_MAP).upper()]
 			except KeyError as e:
 				values  = " ".join([value.name for value in enum])
 				raise ValueError(

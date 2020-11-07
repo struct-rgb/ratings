@@ -1,5 +1,6 @@
 
 from enum import unique, Enum, IntEnum
+from typing import Any, Dict
 
 @unique
 class Page(IntEnum):
@@ -44,11 +45,11 @@ class Status(IntEnum):
 class Tag(object):
 
 	def __init__(self,
-		idnum:       int  = -1,
-		instances:   int  = 1,
-		name:        str  = "unnamed",
-		description: str  = "",
-		from_record: bool = None,
+		idnum:       int            = -1,
+		instances:   int            = 1,
+		name:        str            = "unnamed",
+		description: str            = "",
+		from_record: Dict[str, Any] = None,
 	):
 		if from_record is not None:
 			self.idnum       = from_record["idnum"]

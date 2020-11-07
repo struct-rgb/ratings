@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-from tags import Filter, Predicate, Box, CompilationError, escape, tokenize, enum_subject_parser_factory, TERMINALS, compile
+from tags import Filter, Predicate, Box, CompilationError, escape, tokenize, enum_subject_parser_factory, TERMINALS, compile, PredicateDefinitions
 from model import Search, Sort, Score, Recommendation, Status, Page, Tag, Rating, Model
 
 #
@@ -22,24 +22,6 @@ from model import Search, Sort, Score, Recommendation, Status, Page, Tag, Rating
 parser_score          = enum_subject_parser_factory(Score)
 parser_recommendation = enum_subject_parser_factory(Recommendation)
 parser_status         = enum_subject_parser_factory(Status)
-
-def action_tag_in(tag: str, rating: Rating) -> bool:
-	return tag in rating.tags
-
-def action_score_eq(score: Score, rating: Rating) -> bool:
-	return score == rating.score
-
-def action_score_min(score: Score, rating: Rating) -> bool:
-	return rating.score >= score
-
-def action_score_max(score: Score, rating: Rating) -> bool:
-	return rating.score <= score
-
-def action_recommendation_eq(recommendation: Recommendation, rating: Rating) -> bool:
-	return recommendation == rating.recommendation
-
-def action_status_eq(status: Status, rating: Rating) -> bool:
-	return status == rating.status
 
 def parser_random(string: str) -> float:
 
@@ -56,56 +38,9 @@ def parser_random(string: str) -> float:
 def action_random(percent: float, ignore: Any) -> bool:
 	return random.random() * 100 <= percent
 
-PREDICATES = {
-	
-	# default predicate to apply for bare tag
-	Predicate.DEFAULT: Predicate(
-		Predicate.DEFAULT,
-		action=action_tag_in,
-		parser=str
-	),
-	
-	# filtering by rating score
-	"score"          : Predicate(
-		"score",
-		action=action_score_eq,
-		parser=parser_score,
-	),
-
-	"min score"  : Predicate(
-		"min score",
-		action=action_score_min,
-		parser=parser_score,
-	),
-
-	"max score"  : Predicate(
-		"max score",
-		action=action_score_max,
-		parser=parser_score,
-	),
-
-	# filtering by rating recommendation
-	"recommendation" : Predicate(
-		"recommendation",
-		action=action_recommendation_eq,
-		parser=parser_recommendation,
-	),
-
-	# filtering by rating status
-	"status"         : Predicate(
-		"status",
-		action=action_status_eq,
-		parser=parser_status,
-	),
-
-	# filter out a fixed percentage
-	"random"         : Predicate(
-		"random",
-		action=action_random,
-		parser=parser_random,
-		pure=False,
-	),
-}
+PREDICATES = PredicateDefinitions(
+	action=lambda tag, rating: tag in rating.tags
+)
 
 count_pattern = re.compile(r"^(\d+)\s+of\s+(.*)$")
 
@@ -142,14 +77,6 @@ def action_count(subject: Tuple[Box[int], Callable[[Any], bool]], rating: Rating
 	
 	return False
 
-# return true a specified number of times
-PREDICATES["count"] = Predicate(
-		"count",
-		action=action_count,
-		parser=parser_count,
-		pure=False,
-)
-
 def parser_eval(source):
 	try:
 		return Filter(source, PREDICATES)
@@ -160,17 +87,75 @@ def parser_eval(source):
 		e.source = source
 		raise e
 
-# evaluate a quotation
-PREDICATES["eval"] = Predicate(
-	"eval",
-	action=lambda filterer, rating: filterer(rating), 
-	parser=parser_eval,
-	pure=False
+(PREDICATES
+
+	# filter ratings for a specific score
+	.define("score",
+		action=lambda score, rating: score == rating.score,
+		parser=parser_score,
+	)
+
+	# filter for ratings with at least a certain score
+	.define("min score",
+		action=lambda score, rating: rating.score >= score,
+		parser=parser_score,
+	)
+
+	# filter for ratings with at most a certain score
+	.define("max score",
+		action=lambda score, rating: rating.score <= score,
+		parser=parser_score,
+	)
+
+	# filter for ratings with a specific recommendation level
+	.define("recommendation",
+		action=lambda rec, rating: rec == rating.recommendation,
+		parser=parser_recommendation,
+	)
+
+	# filter for ratings with a specific status
+	.define("status",
+		action=lambda status, rating: status == rating.status,
+		parser=parser_status,
+	)
+
+	# filter for ratings with at least a certain score
+	.define("min score",
+		action=lambda status, rating: rating.status >= status,
+		parser=parser_status,
+	)
+
+	# filter for ratings with at most a certain score
+	.define("max score",
+		action=lambda status, rating: rating.status <= status,
+		parser=parser_status,
+	)
+
+	# filter for ratings with a percent chance to include them
+	.define("random",
+		action=action_random,
+		parser=parser_random,
+		pure=False
+	)
+
+	# filter for a certain number of results at most
+	.define("count",
+		action=action_count,
+		parser=parser_count,
+		pure=False
+	)
+
+	# evaluate a string as an expression
+	.define("eval",
+		action=lambda function, rating: function(rating),
+		parser=parser_eval,
+		pure=False
+	)
 )
 
 #
 #
-#
+
 
 def create_rating_filter(filter_tab):
 
@@ -191,7 +176,7 @@ def create_rating_filter(filter_tab):
 			if rating.comments.lower().find(criterion) == -1:
 				return False 
 		elif search == Search.TAGS:
-			if not criterion.apply(rating):
+			if not criterion(rating):
 				return False
 		elif search == Search.TITLE:
 			if rating.title.lower().find(criterion) == -1:
