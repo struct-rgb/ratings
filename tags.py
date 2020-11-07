@@ -805,7 +805,7 @@ class PredicateDefinitions(Dict[str, Predicate]):
 
 		# initialize default predicate
 		self.default(action=action, parser=parser, pure=pure)
-		
+
 	def define(self, name, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
 
 		self[name] = Predicate(name, action=action, parser=parser, pure=pure)
@@ -818,7 +818,7 @@ class PredicateDefinitions(Dict[str, Predicate]):
 
 		return self
 
-	def alias(original, duplicate):
+	def alias(self, original, duplicate):
 
 		self[duplicate] = self[original]
 

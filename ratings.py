@@ -96,13 +96,13 @@ def parser_eval(source):
 	)
 
 	# filter for ratings with at least a certain score
-	.define("min score",
+	.define("minimum score",
 		action=lambda score, rating: rating.score >= score,
 		parser=parser_score,
 	)
 
 	# filter for ratings with at most a certain score
-	.define("max score",
+	.define("maximum score",
 		action=lambda score, rating: rating.score <= score,
 		parser=parser_score,
 	)
@@ -120,13 +120,13 @@ def parser_eval(source):
 	)
 
 	# filter for ratings with at least a certain score
-	.define("min score",
+	.define("minimum status",
 		action=lambda status, rating: rating.status >= status,
 		parser=parser_status,
 	)
 
 	# filter for ratings with at most a certain score
-	.define("max score",
+	.define("maximum status",
 		action=lambda status, rating: rating.status <= status,
 		parser=parser_status,
 	)
@@ -151,11 +151,13 @@ def parser_eval(source):
 		parser=parser_eval,
 		pure=False
 	)
+
+	# alias definitions
+	.alias("minimum score", "min score")
+	.alias("maximum score", "max score")
+	.alias("minimum status", "min status")
+	.alias("maximum status", "max status")
 )
-
-#
-#
-
 
 def create_rating_filter(filter_tab):
 
