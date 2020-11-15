@@ -235,9 +235,6 @@ class ParserState(object):
 			return self.tokens[self.index][0]
 		else:
 			return None
-	
-
-WHITESPACE  = {" ", "\t", "\r", "\n"}
 
 TERMINALS = {
 	ASTType.AND.value,
@@ -260,11 +257,11 @@ ILLEGAL_AFTER_VALUE = {
 
 ESCAPE_CHARACTER = "%"
 
-QUOTE_CHARACTER  = "#"
+QUOTE_CHARACTER  = "q"
 
 # QUOTE_CHARACTERS = {"\"", "\'"}
 
-SPECIAL = WHITESPACE | TERMINALS | {ESCAPE_CHARACTER}
+SPECIAL = TERMINALS | {ESCAPE_CHARACTER}
 
 #
 # Escape
@@ -285,51 +282,13 @@ def escape(source: str) -> str:
 
 	return source.translate(TRANSLATION)
 
+def extract_tags(source: str, delimiter: str = ","):
+	tokens = tokenize(source)
+	return [token for position, token in tokens if token not in TERMINALS]
+
 #
 # Lexer
 #
-
-def eat_tag(source: str, position: int = 0) -> Tuple[int, int, str]:
-
-	token = list()
-	gap   = list()
-	start = position
-
-	while True:
-
-		if position < len(source) and source[position] == ESCAPE_CHARACTER:
-			position += 1
-			if position < len(source):
-				token.append(source[position])
-				position += 1
-
-		while position < len(source) and source[position] not in SPECIAL:
-			token.append(source[position])
-			position += 1
-
-		if position < len(source) and source[position] == ESCAPE_CHARACTER:
-			position += 1
-			if position < len(source):
-				token.append(source[position])
-				position += 1
-
-		while position < len(source) and source[position] in WHITESPACE:
-			gap.append(source[position])
-			position += 1
-
-		if position == len(source) or source[position] in TERMINALS:
-			return start, position, "".join(token)
-		else:
-			token.extend(gap)
-			gap.clear()
-			continue
-
-def eat_whitespace(source: str, position: int = 0) -> int:
-
-	while position < len(source) and source[position] in WHITESPACE:
-		position += 1
-
-	return position
 
 def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
 
@@ -339,7 +298,7 @@ def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
 	position += 1
 
 	if position == len(source) or source[position] != ASTType.BEGIN.value:
-		return (start, position, QUOTE_CHARACTER)
+		return (position, QUOTE_CHARACTER)
 	else:
 		position += 1
 
@@ -356,7 +315,8 @@ def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
 			depth -= 1
 
 			if depth == 0:
-				return start, position, "".join(token)
+				position += 1
+				return position, "".join(token)
 		elif character == ESCAPE_CHARACTER:
 			# skip the escape character
 			position += 1
@@ -373,6 +333,77 @@ def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
 		position=start,
 		source=source,
 	)
+
+def eat_escaped_section(source: str, position: int = 0) -> Tuple[int, Optional[str]]:
+
+	if position >= len(source):
+		return position, None
+
+	if source[position] == ESCAPE_CHARACTER:
+		position += 1
+		if position < len(source):
+			character = source[position]
+			position += 1
+			return position, character
+
+	if source[position] == QUOTE_CHARACTER:
+
+		token = list()
+
+		while source[position] == QUOTE_CHARACTER:
+			position, quotation = eat_quote(source, position)
+			token.append(quotation)
+
+			if position == len(source):
+				break
+
+		return position, "".join(token)
+
+	return position, None
+
+def eat_tag(source: str, position: int = 0) -> Tuple[int, int, str]:
+
+	token = list()
+	gap   = list()
+	start = position
+
+	while True:
+
+		position, quotation = eat_escaped_section(source, position)
+
+		if quotation is not None:
+			token.append(quotation)
+
+		# eat a number of non-special characters
+		while position < len(source) and source[position] not in SPECIAL and not source[position].isspace():
+			token.append(source[position])
+			position += 1
+
+		position, quotation = eat_escaped_section(source, position)
+
+		if quotation is not None:
+			token.append(quotation)
+
+		# eat a number of whitespace characters
+		while position < len(source) and source[position].isspace():
+			gap.append(source[position])
+			position += 1
+
+		if position == len(source) or source[position] in TERMINALS:
+			# we hit a terminal here, return the token
+			return start, position, "".join(token)
+		else:
+			# we hit a non-terminal, add the gap and continue
+			token.extend(gap)
+			gap.clear()
+			continue
+
+def eat_whitespace(source: str, position: int = 0) -> int:
+
+	while position < len(source) and source[position].isspace():
+		position += 1
+
+	return position
 
 # def eat_quote(quote: str, source: str, position: int = 0) -> Tuple[int, int, str]:
 

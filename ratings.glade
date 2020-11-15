@@ -1191,7 +1191,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="tooltip_text" translatable="yes">Sort the ratings before applying the filter.</property>
+                    <property name="tooltip_text" translatable="yes">Sort the ratings before applying the filter. This guarantees that the words are filtered in a specific order but may be slow for very large files. Otherwise, they are filtered in ascending order of ID.</property>
                     <property name="draw_indicator">True</property>
                   </object>
                   <packing>

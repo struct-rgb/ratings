@@ -11,8 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-
-from tags import Filter, Predicate, Box, CompilationError, escape, tokenize, enum_subject_parser_factory, TERMINALS, compile, PredicateDefinitions
+from tags import Filter, Box, CompilationError, escape, enum_subject_parser_factory, extract_tags, PredicateDefinitions
 from model import Search, Sort, Score, Recommendation, Status, Page, Tag, Rating, Model
 
 #
@@ -450,8 +449,8 @@ class EditorTab(object):
 	@property
 	def tags(self):
 		start, end = self._tags.get_bounds()
-		tokens = tokenize(self._tags.get_text(start, end, True))
-		return {token for position, token in tokens if token not in TERMINALS}
+		text       = self._tags.get_text(start, end, True)
+		return extract_tags(text)
 
 	@tags.setter
 	def tags(self, tag_set):
