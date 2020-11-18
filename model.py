@@ -23,14 +23,16 @@ class Score(IntEnum):
 	AWESOME       = 9
 	FANTASTIC     = 10
 
-@unique
-class Recommendation(IntEnum):
-	DEFINITELY  = 5
-	PROBABLY    = 4
-	MAYBE       = 3
-	HESITANTLY  = 2
-	NEVER       = 1
-	UNSPECIFIED = 0
+# @unique
+# class Score(IntEnum):
+# 	UNSPECIFIED     = 0
+# 	EXTREMELY_LOW   = 1
+# 	MODERATELY_LOW  = 2
+# 	SLIGHTLY_LOW    = 3
+# 	NEUTRAL         = 4
+# 	SLIGHTLY_HIGH   = 5
+# 	MODERATELY_HIGH = 6
+# 	EXTREMELY_HIGH  = 7
 
 @unique
 class Status(IntEnum):
@@ -76,7 +78,6 @@ class Rating(object):
 		idnum=-1,
 		title="Untitled",
 		score=Score.UNSPECIFIED,
-		recommendation=Recommendation.UNSPECIFIED,
 		status=Status.UNSPECIFIED,
 		comments="",
 		tags=set(),
@@ -86,7 +87,6 @@ class Rating(object):
 			self.idnum          = from_record["idnum"]
 			self.title          = from_record["title"]
 			self.score          = Score(from_record["score"])
-			self.recommendation = Recommendation(from_record["recommendation"])
 			self.status         = Status(from_record["status"])
 			self.comments       = from_record["comments"]
 			self.tags           = set(from_record["tags"])
@@ -94,7 +94,6 @@ class Rating(object):
 			self.idnum          = idnum
 			self.title          = title
 			self.score          = score
-			self.recommendation = recommendation
 			self.status         = status
 			self.comments       = comments
 			self.tags           = tags
@@ -104,7 +103,6 @@ class Rating(object):
 			"idnum"          : self.idnum,
 			"title"          : self.title,
 			"score"          : self.score.value,
-			"recommendation" : self.recommendation.value,
 			"status"         : self.status.value,
 			"comments"       : self.comments,
 			"tags"           : list(self.tags)
@@ -115,7 +113,6 @@ class Rating(object):
 			self.idnum,
 			self.title,
 			self.score,
-			self.recommendation,
 			self.status,
 			self.comments,
 			self.tags,
@@ -128,10 +125,9 @@ class Search(Enum):
 	NO_FILTER = 3 
 
 class Sort(Enum):
-	RECOMMENDATION = 0
-	SCORE          = 1
-	STATUS         = 2
-	TITLE          = 3
+	SCORE          = 0
+	STATUS         = 1
+	TITLE          = 2
 
 class Model(object):
 

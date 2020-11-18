@@ -12,14 +12,13 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 from tags import Filter, Box, CompilationError, escape, enum_subject_parser_factory, extract_tags, PredicateDefinitions
-from model import Search, Sort, Score, Recommendation, Status, Page, Tag, Rating, Model
+from model import Search, Sort, Score, Status, Page, Tag, Rating, Model
 
 #
 # filter setup
 #
 
 parser_score          = enum_subject_parser_factory(Score)
-parser_recommendation = enum_subject_parser_factory(Recommendation)
 parser_status         = enum_subject_parser_factory(Status)
 
 def parser_random(string: str) -> float:
@@ -104,12 +103,6 @@ def parser_eval(source):
 	.define("maximum score",
 		action=lambda score, rating: rating.score <= score,
 		parser=parser_score,
-	)
-
-	# filter for ratings with a specific recommendation level
-	.define("recommendation",
-		action=lambda rec, rating: rec == rating.recommendation,
-		parser=parser_recommendation,
 	)
 
 	# filter for ratings with a specific status
@@ -251,12 +244,7 @@ class FilterTab(object):
 
 		sort = self.sort
 
-		if   sort == Sort.RECOMMENDATION:
-			def sort_func(model, a, b, userdata):
-				x = userdata[model.get(a, 1)].recommendation
-				y = userdata[model.get(b, 1)].recommendation
-				return 1 if x > y else -1 if x < y else 0
-		elif sort == Sort.SCORE:
+		if   sort == Sort.SCORE:
 			def sort_func(model, a, b, userdata):
 				x = userdata[model.get(a, 1)].score
 				y = userdata[model.get(b, 1)].score
@@ -381,7 +369,6 @@ class EditorTab(object):
 	def copy_to(self, rating):
 		rating.title          = self.title
 		rating.score          = self.score
-		rating.recommendation = self.recommendation
 		rating.status         = self.status
 		rating.comments       = self.comments
 
@@ -392,7 +379,6 @@ class EditorTab(object):
 		self.idnum          = value.idnum
 		self.title          = value.title
 		self.score          = value.score
-		self.recommendation = value.recommendation
 		self.status         = value.status
 		self.comments       = value.comments
 		self.tags           = value.tags
@@ -420,14 +406,6 @@ class EditorTab(object):
 	@score.setter
 	def score(self, value):
 		self._score.set_active_id(str(value.value))
-
-	@property
-	def recommendation(self):
-		return Recommendation(int(self._recommendation.get_active_id()))
-
-	@recommendation.setter
-	def recommendation(self, value):
-		self._recommendation.set_active_id(str(value.value))
 
 	@property
 	def status(self):
@@ -460,7 +438,6 @@ class EditorTab(object):
 	def clear(self):
 		self.title          = ""
 		self.score          = Score.UNSPECIFIED
-		self.recommendation = Recommendation.UNSPECIFIED
 		self.status         = Status.UNSPECIFIED
 		self.comments       = ""
 		self.tags           = ""
