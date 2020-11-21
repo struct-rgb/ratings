@@ -1,6 +1,8 @@
 
+import json
+
 from enum import unique, Enum, IntEnum
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
 @unique
 class Page(IntEnum):
@@ -11,28 +13,14 @@ class Page(IntEnum):
 
 @unique
 class Score(IntEnum):
-	UNSPECIFIED   = 0
-	APPALLING     = 1
-	AWFUL         = 2
-	BAD           = 3
-	UNINTERESTING = 4
-	MEDIOCRE      = 5
-	FINE          = 6
-	GOOD          = 7
-	GREAT         = 8
-	AWESOME       = 9
-	FANTASTIC     = 10
-
-# @unique
-# class Score(IntEnum):
-# 	UNSPECIFIED     = 0
-# 	EXTREMELY_LOW   = 1
-# 	MODERATELY_LOW  = 2
-# 	SLIGHTLY_LOW    = 3
-# 	NEUTRAL         = 4
-# 	SLIGHTLY_HIGH   = 5
-# 	MODERATELY_HIGH = 6
-# 	EXTREMELY_HIGH  = 7
+	UNSPECIFIED     = 0
+	EXTREMELY_LOW   = 1
+	MODERATELY_LOW  = 2
+	SLIGHTLY_LOW    = 3
+	NEUTRAL         = 4
+	SLIGHTLY_HIGH   = 5
+	MODERATELY_HIGH = 6
+	EXTREMELY_HIGH  = 7
 
 @unique
 class Status(IntEnum):
@@ -109,7 +97,7 @@ class Rating(object):
 		}
 
 	def __repr__(self) -> str:
-		return "%i, %s, %s, %s, %s, %s, %s" % (
+		return "%i, %s, %s, %s, %s, %s" % (
 			self.idnum,
 			self.title,
 			self.score,
@@ -131,7 +119,7 @@ class Sort(Enum):
 
 class Model(object):
 
-	def __init__(self, ratings=None, tags=None):
+	def __init__(self, ratings: Optional[Dict[int, Rating]] = None, tags: Optional[Dict[str, Tag]] = None):
 
 		self.ratings    = {} if ratings is None else ratings
 		self.max_rating = -1
@@ -139,7 +127,7 @@ class Model(object):
 		self.tags       = {} if tags    is None else tags
 		self.max_tags   = -1
 
-	def clear(self):
+	def clear(self) -> None:
 		self.max_rating = -1
 		self.ratings.clear()
 
@@ -173,7 +161,7 @@ class Model(object):
 
 		return dirty
 
-	def attach_tag(self, rating, tag):
+	def attach_tag(self, rating: Rating, tag: Tag) -> bool:
 		if tag.name in rating.tags:
 			return False
 
@@ -181,7 +169,7 @@ class Model(object):
 		tag.instances += 1
 		return True
 
-	def detach_tag(self, rating, tag):
+	def detach_tag(self, rating: Rating, tag: Tag) -> bool:
 		if tag.name not in rating.tags:
 			return False
 
@@ -189,7 +177,7 @@ class Model(object):
 		tag.instances -= 1
 		return True
 
-	def create_rating(self):
+	def create_rating(self) -> Rating:
 		self.max_rating += 1
 		rating = Rating(idnum=self.max_rating)
 		self.ratings[self.max_rating] = rating
@@ -224,7 +212,7 @@ class Model(object):
 				"Target cannot be type %s" % type(kind)
 			)
 
-	def remove(self, target):
+	def remove(self, target: Union[Rating, Tag]) -> None:
 		if   isinstance(target, Rating):
 			
 			del self.ratings[target.idnum]
@@ -241,7 +229,7 @@ class Model(object):
 				"Target cannot be type %s" % type(target)
 			)
 
-	def rename(self, tag, changed_to):
+	def rename(self, tag: Tag, changed_to: str) -> None:
 
 		if tag.name not in self.tags:
 			raise KeyError("Model does not possess tag \"%s\"" % tag.name)
@@ -286,7 +274,7 @@ class Model(object):
 			self.tags[changed_to] = tag
 			tag.name = changed_to
 
-	def vacuum(self):
+	def vacuum(self) -> None:
 
 		to_remove = []
 
@@ -296,6 +284,12 @@ class Model(object):
 
 		for tag in to_remove:
 			del self.tags[tag]
+
+	def iter_tags(self):
+		return self.tags.values()
+
+	def iter_ratings(self):
+		return self.ratings.values()
 
 	def from_json_friendly(self, data):
 		self.clear()

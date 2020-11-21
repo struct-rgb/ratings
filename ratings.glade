@@ -78,11 +78,7 @@
       </object>
     </child>
     <child type="titlebar">
-      <object class="GtkLabel" id="message_window_title">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Message</property>
-      </object>
+      <placeholder/>
     </child>
   </object>
   <object class="GtkApplicationWindow" id="rater_window">
@@ -248,16 +244,13 @@
                     <property name="active">10</property>
                     <property name="active_id">0</property>
                     <items>
-                      <item id="10" translatable="yes">Fantastic</item>
-                      <item id="9" translatable="yes">Awesome</item>
-                      <item id="8" translatable="yes">Great</item>
-                      <item id="7" translatable="yes">Good</item>
-                      <item id="6" translatable="yes">Fine</item>
-                      <item id="5" translatable="yes">Mediocre</item>
-                      <item id="4" translatable="yes">Uninteresting</item>
-                      <item id="3" translatable="yes">Bad</item>
-                      <item id="2" translatable="yes">Awful</item>
-                      <item id="1" translatable="yes">Appalling</item>
+                      <item id="7" translatable="yes">Extremely High</item>
+                      <item id="6" translatable="yes">Moderately High</item>
+                      <item id="5" translatable="yes">Slightly High</item>
+                      <item id="4" translatable="yes">Neutral</item>
+                      <item id="3" translatable="yes">Slightly Low</item>
+                      <item id="2" translatable="yes">Moderately Low</item>
+                      <item id="1" translatable="yes">Extremely Low</item>
                       <item id="0" translatable="yes">Unspecified</item>
                     </items>
                   </object>

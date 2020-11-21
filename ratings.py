@@ -18,8 +18,8 @@ from model import Search, Sort, Score, Status, Page, Tag, Rating, Model
 # filter setup
 #
 
-parser_score          = enum_subject_parser_factory(Score)
-parser_status         = enum_subject_parser_factory(Status)
+parser_score  = enum_subject_parser_factory(Score)
+parser_status = enum_subject_parser_factory(Status)
 
 def parser_random(string: str) -> float:
 
@@ -646,7 +646,11 @@ class Rater:
 		self.message_window = builder.get_object("message_window")
 		self.query_label    = builder.get_object("message_window_query_label")
 		self.error_label    = builder.get_object("message_window_error_label")
-		self.message_window.connect("destroy", self.on_close_message_button_clicked)
+		# self.message_window.connect("destroy", self.on_close_message_button_clicked)
+
+		self.message_window.connect("destroy-event",
+			lambda widget, event: self.on_close_message_button_clicked()
+		)
 
 		builder.connect_signals(self)
 
