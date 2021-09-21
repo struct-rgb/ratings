@@ -46,18 +46,18 @@ whitespace surrounding reserved characters is not significant.
 ### Escaping Characters ###
 
 In order to inlcude a reserved character in a predicate argument, that character
-must be preceeded by the escape character `\\` as in the following
-`tag with\\, comma`, in this case, the comma is part of the tag name and it is
+must be preceeded by the escape character `\` as in the following
+`tag with\, comma`, in this case, the comma is part of the tag name and it is
 interpreted as being `tag with, comma`. Non-reserved characters preceeded by
 the escape character are treated as is, so `a\p\p\le` is treated the same as
-`apple`. In order to include a literal `\\` in a tag name, it must also be
+`apple`. In order to include a literal `\` in a tag name, it must also be
 preceeded by an escape character as in `literal \\\\ character` which is read
 as `literal \\ character`
 
 ## Predicate Forms ##
 
 Predicates forms are composed of two identifers in the form:
-`\[Predicate\] \[:\] \[Argument\]`
+`[Predicate] [:] [Argument]`
 
 They are the smallest semantic unit of a search, i.e. the smallest unit of a
 search that can actually be executed on to produce results.
@@ -120,7 +120,7 @@ starting from the lowest number and proceeding to the highest:
 ### Unary Operators ###
 
 There is only one unary operator, the logical not operator. It takes only one
-operand to its right, in the form `\[operator\] \[operand\]`
+operand to its right, in the form `[operator] [operand]`
 
 #### The Not Operator ####
 
@@ -131,11 +131,11 @@ hand side are filtered out.
 ### Binary Operators ###
 
 There are five binary operators. They each take two operands, one to the left
-and one to the right, in the form `\[operand A\] \[operator\] \[operand B\]`
+and one to the right, in the form `[operand A] [operator] [operand B]`
 
 Binary operators are either commutative or non-commutative. For a commutative
-operator, the expression  `\[A\] \[operator\] \[B\]` is eqivalent to the
-expression `\[B\] \[operator\] \[A\]` but the same is not true for a
+operator, the expression  `[A] [operator] [B]` is eqivalent to the
+expression `[B] [operator] [A]` but the same is not true for a
 non-commutative operator.
 
 #### The And Operator ####
@@ -193,7 +193,7 @@ The Statement Operator is non-commutative.
 
 ## Examples ##
 
-The expression `dogs, \{beach? crabs ^ seagulls\}` selects every picture with
+The expression `dogs, {beach? crabs ^ seagulls}` selects every picture with
 a dog, and for those on a beach, filters out those without any crabs or seagulls
 and those that have both crabs and seagulls.
 
