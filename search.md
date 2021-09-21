@@ -109,13 +109,13 @@ form cannot be nested in the way that operands to operators can be.
 In the absence of braces the operators are evaluated in the following order,
 starting from the lowest number and proceeding to the highest:
 
-	1. ~
-	2. ,
-	3. ^
-	4. |
-	5. ?
-	6. =
-	7. ;
+1. `~`
+2. `,`
+3. `^`
+4. `|`
+5. `?`
+6. `=`
+7. `;`
 
 ### Unary Operators ###
 
