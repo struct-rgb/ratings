@@ -1,6 +1,10 @@
 
 import json
 
+from collections import namedtuple
+
+from pathlib import Path
+from datetime import date
 from enum import unique, Enum, IntEnum
 from typing import Any, Dict, Optional, Union
 
@@ -52,6 +56,19 @@ class Tag(object):
 			self.name        = name
 			self.description = description
 
+	def __eq__(self, other):
+		if isinstance(other, str):
+			return self.name == other
+		return self.name == other.name
+
+	def __ne__(self, other):
+		if isinstance(other, str):
+			return self.name != other
+		return self.name != other.name
+
+	def __hash__(self):
+		return hash(self.name)
+
 	def to_json_friendly(self):
 		return {
 			"idnum"       : self.idnum,
@@ -72,43 +89,53 @@ class Rating(object):
 		from_record=None,
 	):
 		if from_record is not None:
-			self.idnum          = from_record["idnum"]
-			self.title          = from_record["title"]
-			self.score          = Score(from_record["score"])
-			self.status         = Status(from_record["status"])
-			self.comments       = from_record["comments"]
-			self.tags           = set(from_record["tags"])
+			self.idnum    = from_record["idnum"]
+			self.title    = from_record["title"]
+			self.score    = Score(from_record["score"])
+			self.status   = Status(from_record["status"])
+			self.comments = from_record["comments"]
+			self.tags     = set(from_record["tags"])
+
+			self.created  = date.fromisoformat(from_record.get("created", date.today().isoformat()))
+			self.modified = date.fromisoformat(from_record.get("modified", date.today().isoformat()))
 		else:
-			self.idnum          = idnum
-			self.title          = title
-			self.score          = score
-			self.status         = status
-			self.comments       = comments
-			self.tags           = tags
+			self.idnum    = idnum
+			self.title    = title
+			self.score    = score
+			self.status   = status
+			self.comments = comments
+			self.tags     = tags
+
+			self.created  = date.today()
+			self.modified = self.created
 
 	def to_json_friendly(self):
 		return {
-			"idnum"          : self.idnum,
-			"title"          : self.title,
-			"score"          : self.score.value,
-			"status"         : self.status.value,
-			"comments"       : self.comments,
-			"tags"           : list(self.tags)
+			"idnum"    : self.idnum,
+			"title"    : self.title,
+			"score"    : self.score.value,
+			"status"   : self.status.value,
+			"comments" : self.comments,
+			"tags"     : list(self.tags),
+			"created"  : self.created.isoformat(),
+			"modified" : self.modified.isoformat(),
 		}
 
 	def __repr__(self) -> str:
-		return "%i, %s, %s, %s, %s, %s" % (
+		return "%i, %s, %s, %s, %s, %s, %s, %s" % (
 			self.idnum,
 			self.title,
 			self.score,
 			self.status,
 			self.comments,
 			self.tags,
+			self.created,
+			self.modified
 		)
 
 class Search(Enum):
 	COMMENTS  = 0
-	TAGS      = 1
+	ADVANCED  = 1
 	TITLE     = 2
 	NO_FILTER = 3 
 
@@ -320,3 +347,35 @@ class Model(object):
 				tag.to_json_friendly()    for tag    in self.tags.values()
 			],
 		}
+
+	def load(self, path):
+
+		if path is None: return False
+
+		if not isinstance(path, Path):
+			path = Path(path)
+
+		if not path.is_file():return False
+
+		self.from_json_friendly(
+			json.loads(
+					path.read_text()
+				)
+		)
+
+		return True
+	
+	def save(self, path):
+
+		if path is None: return False
+
+		if not isinstance(path, Path):
+			path = Path(path)
+
+		if path.is_file() or not path.exists():
+			path.write_text(
+				json.dumps(self.to_json_friendly(), indent=4)
+			)
+			return True
+		
+		return False

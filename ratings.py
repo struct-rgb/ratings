@@ -5,13 +5,14 @@ import json
 import random
 
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from datetime import date
+from typing import Any, Callable, Set, Tuple
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-from tags import Filter, Box, CompilationError, escape, enum_subject_parser_factory, extract_tags, PredicateDefinitions
+from tags import Filter, Box, CompilationError, escape, enum_subject_parser_factory, tagset, PredicateDefinitions, DEFAULT_BOOL_PARSER, highlighting
 from model import Search, Sort, Score, Status, Page, Tag, Rating, Model
 
 #
@@ -20,6 +21,10 @@ from model import Search, Sort, Score, Status, Page, Tag, Rating, Model
 
 parser_score  = enum_subject_parser_factory(Score)
 parser_status = enum_subject_parser_factory(Status)
+
+####################
+# RANDOM PREDICATE #
+####################
 
 def parser_random(string: str) -> float:
 
@@ -39,6 +44,10 @@ def action_random(percent: float, ignore: Any) -> bool:
 PREDICATES = PredicateDefinitions(
 	action=lambda tag, rating: tag in rating.tags
 )
+
+###################
+# COUNT PREDICATE #
+###################
 
 count_pattern = re.compile(r"^(\d+)\s+of\s+(.*)$")
 
@@ -75,6 +84,10 @@ def action_count(subject: Tuple[Box[int], Callable[[Any], bool]], rating: Rating
 	
 	return False
 
+##################
+# EVAL PREDICATE #
+##################
+
 def parser_eval(source):
 	try:
 		return Filter(source, PREDICATES)
@@ -85,80 +98,193 @@ def parser_eval(source):
 		e.source = source
 		raise e
 
+def parser_lower_str(source):
+	return source.lower()
+
+###################
+# DATE PREDICATES #
+###################
+
+def parser_date(isoformat: str):
+	try:
+		return date.fromisoformat(isoformat)
+	except ValueError as e:
+		raise ValueError("date must be in the format YYYY-MM-DD")
+
 (PREDICATES
 
-	# filter ratings for a specific score
+	.define("tag",
+		readme="filter for ratings with the specified tag",
+		action=lambda tag, rating: tag in rating.tags,
+		parser=lambda x: x,
+	)
+
 	.define("score",
+		readme="filter for ratings with the specified score",
 		action=lambda score, rating: score == rating.score,
 		parser=parser_score,
 	)
 
-	# filter for ratings with at least a certain score
 	.define("minimum score",
+		readme="filter for ratings with at least a certain score",
 		action=lambda score, rating: rating.score >= score,
 		parser=parser_score,
 	)
 
-	# filter for ratings with at most a certain score
 	.define("maximum score",
+		readme="filter for ratings with at most a certain score",
 		action=lambda score, rating: rating.score <= score,
 		parser=parser_score,
 	)
 
-	# filter for ratings with a specific status
 	.define("status",
+		readme="filter for ratings with the specified status",
 		action=lambda status, rating: status == rating.status,
 		parser=parser_status,
 	)
 
-	# filter for ratings with at least a certain score
 	.define("minimum status",
+		readme="filter for ratings with at least a certain status",
 		action=lambda status, rating: rating.status >= status,
 		parser=parser_status,
 	)
 
-	# filter for ratings with at most a certain score
 	.define("maximum status",
+		readme="filter for ratings with at most a certain status",
 		action=lambda status, rating: rating.status <= status,
 		parser=parser_status,
 	)
 
-	# filter for ratings with a percent chance to include them
+	.define("tags",
+		readme="filter for ratings with a specific number of tags",
+		action=lambda number, rating: len(rating.tags) == number,
+		parser=int,
+	)
+
+	.define("minimum tags",
+		readme="filter for ratings with a specific number of tags",
+		action=lambda number, rating: len(rating.tags) >= number,
+		parser=int,
+	)
+
+	.define("maximum tags",
+		readme="filter for ratings with a specific number of tags",
+		action=lambda number, rating: len(rating.tags) <= number,
+		parser=int,
+	)
+
 	.define("random",
+		readme="filter ratings with a percent chance to include each",
 		action=action_random,
 		parser=parser_random,
 		pure=False
 	)
 
-	# filter for a certain number of results at most
-	.define("count",
+	.define("count", # TODO possibly remove
+		readme="filter for a certain number of results at most",
 		action=action_count,
 		parser=parser_count,
 		pure=False
 	)
 
-	# evaluate a string as an expression
-	.define("eval",
+	.define("eval", # TODO possibly remove
+		readme="evaluate a string as an expression",
 		action=lambda function, rating: function(rating),
 		parser=parser_eval,
 		pure=False
 	)
 
+	.define("title",
+		readme="filter for ratings with certain text in the title (case insensitive)",
+		action=lambda string, rating: rating.title.lower().find(string) != -1,
+		parser=parser_lower_str,
+	)
+
+	.define("comment",
+		readme="filter for ratings with certain text in the comments (case insensitive)",
+		action=lambda string, rating: rating.comments.lower().find(string) != -1,
+		parser=parser_lower_str,
+	)
+
+	.define("text",
+		readme="filter for ratings with certain text in the title or the comments (case insensitive)",
+		action=lambda string, rating: (
+			rating.title.lower().find(string) != -1 or rating.comments.lower().find(string) != -1
+		),
+		parser=parser_lower_str,
+	)
+
+	.define("commented",
+		readme="filter for ratings that either have or lack a comment",
+		action=lambda boolean, rating: bool(rating.comments) == boolean,
+		parser=DEFAULT_BOOL_PARSER,
+	)
+
+	.define("value",
+		readme="a literal boolean value; true or false",
+		action=lambda boolean, rating: boolean,
+		parser=DEFAULT_BOOL_PARSER,
+	)
+
+	.define("modified",
+		readme="ratings modified on YYYY-MM-DD",
+		action=lambda day, rating: rating.modified == day,
+		parser=parser_date,
+	)
+
+	.define("modified after",
+		readme="ratings modified after YYYY-MM-DD",
+		action=lambda day, rating: rating.modified > day,
+		parser=parser_date,
+	)
+
+	.define("modified before",
+		readme="ratings modified before YYYY-MM-DD",
+		action=lambda day, rating: rating.modified < day,
+		parser=parser_date,
+	)
+
+	.define("created",
+		readme="ratings created on YYYY-MM-DD",
+		action=lambda day, rating: rating.created == day,
+		parser=parser_date,
+	)
+
+	.define("created after",
+		readme="ratings created after YYYY-MM-DD",
+		action=lambda day, rating: rating.created > day,
+		parser=parser_date,
+	)
+
+	.define("created before",
+		readme="ratings created before YYYY-MM-DD",
+		action=lambda day, rating: rating.created < day,
+		parser=parser_date,
+	)
+
 	# alias definitions
+
 	.alias("minimum score", "min score")
 	.alias("maximum score", "max score")
+
 	.alias("minimum status", "min status")
 	.alias("maximum status", "max status")
+
+	.alias("minimum tags", "min tags")
+	.alias("maximum tags", "max tags")
+
+	.alias("commented", "has comment")
 )
 
 def create_rating_filter(filter_tab):
 
-	search         = filter_tab.search
+	search = filter_tab.search
 
 	if   search == Search.COMMENTS:
 		criterion = filter_tab.query.lower()
-	elif search == Search.TAGS:
-		criterion = Filter(filter_tab.query, PREDICATES)
+	elif search == Search.ADVANCED:
+		adv       = filter_tab.advanced
+		criterion = Filter(adv if adv else filter_tab.query, PREDICATES)
 	elif search == Search.TITLE:
 		criterion = filter_tab.query.lower()
 	else:
@@ -169,7 +295,7 @@ def create_rating_filter(filter_tab):
 		if   search == Search.COMMENTS:
 			if rating.comments.lower().find(criterion) == -1:
 				return False 
-		elif search == Search.TAGS:
+		elif search == Search.ADVANCED:
 			if not criterion(rating):
 				return False
 		elif search == Search.TITLE:
@@ -220,12 +346,19 @@ class FilterTab(object):
 
 		self.model            = model
 
+		self._advanced        = builder.get_object("highlight_textview").get_buffer()
+		self._advanced.create_tag("operator", foreground="red", background=None)
+		self._advanced.create_tag("predicate", foreground="magenta")
+		self._advanced.create_tag("grouping", foreground="red")
+		self._advanced.create_tag("error", foreground="white", background="red")
+
 		self.reset()
 		self.reset_tags()
 
 	def reset(self):
-		self.search         = Search.TITLE
-		self.sort           = Sort.TITLE
+		self.advanced = ""
+		self.search   = Search.TITLE
+		self.sort     = Sort.TITLE
 
 	def reset_tags(self):
 		self.tags_search    = Search.TITLE
@@ -287,13 +420,40 @@ class FilterTab(object):
 			# TODO
 			raise TypeError("kind must be one of Rating or Tag")
 
+	def highlight(self):
+		
+		highlights = highlighting(self.advanced, PREDICATES.keys())
+		self._advanced.remove_all_tags(*self._advanced.get_bounds())
+
+		for position, token, tag in highlights:
+			start = self._advanced.get_iter_at_offset(position)
+			end   = self._advanced.get_iter_at_offset(position + len(token))
+			self._advanced.apply_tag_by_name(tag, start, end)
+
 	@property
 	def query(self):
 		return self._query.get_text()
 
+	@query.setter
+	def query(self, value):
+		self._query.set_text(value)
+
+	@property
+	def advanced(self):
+		return self._advanced.get_text(*self._advanced.get_bounds(), True)
+	
+	@advanced.setter
+	def advanced(self, value):
+		self._advanced.set_text(value)
+		self.highlight()
+
 	@property
 	def tags_query(self):
 		return self._tags_query.get_text()
+
+	@tags_query.setter
+	def tags_query(self, value):
+		self._tags_query.set_text(value)
 
 	@property
 	def ascending(self):
@@ -364,9 +524,22 @@ class EditorTab(object):
 		self._tags           = builder.get_object("tags_textview").get_buffer()
 		self._original_tags  = None
 
+		self._created_label  = builder.get_object("created_label")
+		self._modified_label = builder.get_object("modified_label")
+		self._created        = date.today() 
+		self._modified       = date.today() 
+
 		self.model           = model
 
 	def copy_to(self, rating):
+
+		modified = (
+			   rating.score    != self.score
+			or rating.status   != self.status
+			or rating.title    != self.title
+			or rating.comments != self.comments
+		) 
+
 		rating.title          = self.title
 		rating.score          = self.score
 		rating.status         = self.status
@@ -374,6 +547,11 @@ class EditorTab(object):
 
 		if self._original_tags != self._tags.get_text(*self._tags.get_bounds(), True):
 			self.model.change_tags(rating, self.tags)
+			modified = True
+
+		if modified:
+			rating.modified = date.today()
+			self.modified   = rating.modified
 
 	def copy_from(self, value):
 		self.idnum          = value.idnum
@@ -382,6 +560,10 @@ class EditorTab(object):
 		self.status         = value.status
 		self.comments       = value.comments
 		self.tags           = value.tags
+		
+		# set date attributes/labels these are not edittable
+		self.created        = value.created
+		self.modified       = value.modified
 
 	@property
 	def idnum(self):
@@ -428,12 +610,30 @@ class EditorTab(object):
 	def tags(self):
 		start, end = self._tags.get_bounds()
 		text       = self._tags.get_text(start, end, True)
-		return extract_tags(text)
+		return tagset(text)
 
 	@tags.setter
 	def tags(self, tag_set):
 		self._original_tags = ", ".join([escape(tag) for tag in tag_set])
 		self._tags.set_text(self._original_tags)
+
+	@property
+	def created(self):
+		return self._created
+
+	@created.setter
+	def created(self, day):
+		self._created = day
+		self._created_label.set_text(day.isoformat())
+
+	@property
+	def modified(self):
+		return self._modified
+
+	@modified.setter
+	def modified(self, day):
+		self._modified = day
+		self._modified_label.set_text(day.isoformat())
 
 	def clear(self):
 		self.title          = ""
@@ -441,6 +641,8 @@ class EditorTab(object):
 		self.status         = Status.UNSPECIFIED
 		self.comments       = ""
 		self.tags           = ""
+		self._created       = date.today() 
+		self._modified      = date.today()
 
 class FilesTab(object):
 
@@ -547,10 +749,11 @@ class TaggingTab(object):
 
 		if has_next_row or (tag := self.liststore.get_iter_first()) is not None:
 			name              = self.liststore.get_value(tag, 0)
-			self.selected     = self.model.tags[idnum]
+			self.selected     = self.model.tags[name]
+			path              = self.liststore.get_path(tag)
 			self.selected_row = self.liststore[path]
 			self.treeview.set_cursor(path, self.title_column, False)
-			self.editor.copy_from(self.selected)
+			self.copy_from(self.selected)
 		else:
 			self.selected    = None
 			self.name        = ""
@@ -646,10 +849,18 @@ class Rater:
 		self.message_window = builder.get_object("message_window")
 		self.query_label    = builder.get_object("message_window_query_label")
 		self.error_label    = builder.get_object("message_window_error_label")
-		# self.message_window.connect("destroy", self.on_close_message_button_clicked)
 
-		self.message_window.connect("destroy-event",
-			lambda widget, event: self.on_close_message_button_clicked()
+		# TODO fix it so that closing the message window via border icon doesn't destroy it
+		self.message_window.connect("destroy",
+			self.on_close_message_button_clicked
+		)
+
+		self.message_window.connect("delete-event",
+			lambda widget, event: self.close_message_window()
+		)
+
+		self.message_window.connect("response",
+			lambda widget, event: self.close_message_window()
 		)
 
 		builder.connect_signals(self)
@@ -675,12 +886,8 @@ class Rater:
 
 	def open_file(self):
 		
-		path = Path(self.files.path)
-
-		if path is None or not path.is_file():
+		if not self.model.load(self.files.path):
 			return False
-
-		self.model.from_json_friendly(json.loads(path.read_text()))
 
 		results = self.model.fill_in(Tag, self.tagging.liststore)
 		self.tagging.results_label.set_text("%i results" % results)
@@ -704,12 +911,7 @@ class Rater:
 		if self.selected is not None:
 			self.editor.copy_to(self.selected)
 
-		path = Path(self.files.path)
-
-		if path.is_file() or not path.exists():
-			path.write_text(
-				json.dumps(self.model.to_json_friendly(), indent=4)
-			)
+		self.model.save(self.files.path)
 
 	def new_file(self):
 		self.liststore.clear()
@@ -747,6 +949,7 @@ class Rater:
 		if has_next_row or (tag := self.liststore.get_iter_first()) is not None:
 			idnum             = self.liststore.get_value(tag, 1)
 			self.selected     = self.model.ratings[idnum]
+			path              = self.liststore.get_path(tag)
 			self.selected_row = self.liststore[path]
 			self.treeview.set_cursor(path, self.title_column, False)
 			self.editor.copy_from(self.selected)
@@ -864,8 +1067,17 @@ class Rater:
 	def on_vacuum_tag_button_clicked(self, widget):
 		self.tagging.vacuum()
 
+	def on_search_tag_button_clicked(self, widget):
+		self.filter.search   = Search.ADVANCED
+		self.filter.advanced = ""
+		self.filter.query    = self.tagging.name
+		self.on_filter_apply_clicked(widget)
+
 	def on_close_message_button_clicked(self, widget):
 		self.close_message_window()
+
+	def on_highlight_buffer_changed(self, widget):
+		self.filter.highlight()
 
 def main():
 	rater = Rater()

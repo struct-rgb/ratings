@@ -1,12 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
+GLADE = '''<?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.22"/>
-  <object class="GtkTextTagTable" id="highlight_tag_table"/>
-  <object class="GtkTextBuffer" id="highlight_buffer">
-    <property name="tag-table">highlight_tag_table</property>
-    <signal name="changed" handler="on_highlight_buffer_changed" swapped="no"/>
-  </object>
   <object class="GtkDialog" id="message_window">
     <property name="can-focus">False</property>
     <property name="type-hint">dialog</property>
@@ -82,11 +77,6 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkImage" id="search_tag_button_image">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-find</property>
   </object>
   <object class="GtkApplicationWindow" id="rater_window">
     <property name="can-focus">False</property>
@@ -249,7 +239,7 @@
                     <property name="margin-end">3</property>
                     <property name="margin-top">3</property>
                     <property name="margin-bottom">3</property>
-                    <property name="active">7</property>
+                    <property name="active">10</property>
                     <property name="active-id">0</property>
                     <items>
                       <item id="7" translatable="yes">Extremely High</item>
@@ -271,7 +261,6 @@
                   <object class="GtkLabel" id="id_label">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="tooltip-text" translatable="yes">The internal ID number of this rating</property>
                     <property name="halign">end</property>
                     <property name="label" translatable="yes">ID</property>
                   </object>
@@ -309,7 +298,7 @@
                     <property name="margin-end">3</property>
                     <property name="margin-top">3</property>
                     <property name="margin-bottom">3</property>
-                    <property name="active">7</property>
+                    <property name="active">6</property>
                     <property name="active-id">0</property>
                     <items>
                       <item id="6" translatable="yes">Reviewing</item>
@@ -364,7 +353,6 @@
                         <property name="margin-top">3</property>
                         <property name="margin-bottom">3</property>
                         <property name="wrap-mode">word</property>
-                        <property name="input-hints">GTK_INPUT_HINT_SPELLCHECK | GTK_INPUT_HINT_NONE</property>
                       </object>
                     </child>
                   </object>
@@ -378,7 +366,6 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="tooltip-text" translatable="yes">Tags that apply to the work</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Tags</property>
                   </object>
@@ -405,7 +392,6 @@
                         <property name="margin-top">3</property>
                         <property name="margin-bottom">3</property>
                         <property name="wrap-mode">word</property>
-                        <property name="input-hints">GTK_INPUT_HINT_SPELLCHECK | GTK_INPUT_HINT_NONE</property>
                       </object>
                     </child>
                   </object>
@@ -421,7 +407,6 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
-                    <property name="tooltip-text" translatable="yes">Create a new rating</property>
                     <property name="margin-left">3</property>
                     <property name="margin-right">3</property>
                     <property name="margin-start">3</property>
@@ -441,7 +426,6 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
-                    <property name="tooltip-text" translatable="yes">Delete this rating</property>
                     <property name="margin-left">3</property>
                     <property name="margin-right">3</property>
                     <property name="margin-start">3</property>
@@ -479,7 +463,6 @@
                       <object class="GtkLabel" id="created_label">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="tooltip-text" translatable="yes">The date that this rating was created</property>
                         <property name="margin-start">3</property>
                         <property name="margin-end">3</property>
                         <property name="margin-top">3</property>
@@ -522,7 +505,6 @@
                       <object class="GtkLabel" id="modified_label">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="tooltip-text" translatable="yes">The date that this rating was last modifed</property>
                         <property name="margin-start">3</property>
                         <property name="margin-end">3</property>
                         <property name="margin-top">3</property>
@@ -634,7 +616,6 @@
                         <property name="margin-top">3</property>
                         <property name="margin-bottom">3</property>
                         <property name="wrap-mode">word</property>
-                        <property name="input-hints">GTK_INPUT_HINT_SPELLCHECK | GTK_INPUT_HINT_NONE</property>
                       </object>
                     </child>
                   </object>
@@ -783,7 +764,6 @@
                         <property name="margin-end">3</property>
                         <property name="margin-top">3</property>
                         <property name="margin-bottom">3</property>
-                        <property name="vexpand">True</property>
                         <property name="activate-on-single-click">True</property>
                         <signal name="row-activated" handler="on_tagging_treeview_row_activated" swapped="no"/>
                         <child internal-child="selection">
@@ -818,23 +798,9 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="tagging_instances_label">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="tooltip-text" translatable="yes">The number of ratings that this tag is attached to</property>
-                    <property name="halign">end</property>
-                    <property name="label" translatable="yes"># instances</property>
-                  </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">1</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkLabel" id="tagging_id_label">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="tooltip-text" translatable="yes">The internal ID number of this tag</property>
                     <property name="halign">start</property>
                     <property name="margin-start">3</property>
                     <property name="margin-end">3</property>
@@ -845,27 +811,19 @@
                   <packing>
                     <property name="left-attach">0</property>
                     <property name="top-attach">0</property>
+                    <property name="width">2</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="search_tag_button">
+                  <object class="GtkLabel" id="tagging_instances_label">
                     <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="tooltip-text" translatable="yes">Search for works with this tag</property>
+                    <property name="can-focus">False</property>
                     <property name="halign">end</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="image">search_tag_button_image</property>
-                    <signal name="clicked" handler="on_search_tag_button_clicked" swapped="no"/>
+                    <property name="label" translatable="yes"># instances</property>
                   </object>
                   <packing>
                     <property name="left-attach">1</property>
-                    <property name="top-attach">0</property>
+                    <property name="top-attach">1</property>
                   </packing>
                 </child>
               </object>
@@ -886,7 +844,7 @@
               </packing>
             </child>
             <child>
-              <!-- n-columns=2 n-rows=12 -->
+              <!-- n-columns=2 n-rows=10 -->
               <object class="GtkGrid">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
@@ -925,7 +883,7 @@
                     <property name="active">2</property>
                     <items>
                       <item id="0" translatable="yes">Comments</item>
-                      <item id="1" translatable="yes">Advanced</item>
+                      <item id="1" translatable="yes">Tags</item>
                       <item id="2" translatable="yes">Title</item>
                       <item id="3" translatable="yes">No Filter</item>
                     </items>
@@ -933,6 +891,44 @@
                   <packing>
                     <property name="left-attach">0</property>
                     <property name="top-attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="filter_apply">
+                    <property name="label" translatable="yes">Apply</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <signal name="clicked" handler="on_filter_apply_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="filter_reset">
+                    <property name="label" translatable="yes">Reset</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <signal name="clicked" handler="on_filter_reset_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">4</property>
                   </packing>
                 </child>
                 <child>
@@ -958,6 +954,30 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <property name="label" translatable="yes">Tagging</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                      <attribute name="scale" value="1"/>
+                      <attribute name="underline" value="True"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">6</property>
+                    <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkSeparator">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -970,6 +990,148 @@
                     <property name="left-attach">0</property>
                     <property name="top-attach">5</property>
                     <property name="width">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <property name="label" translatable="yes">Search</property>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">7</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBoxText" id="filter_tags_search_combobox">
+                    <property name="name">search_combobox</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <property name="active">1</property>
+                    <items>
+                      <item id="0" translatable="yes">Description</item>
+                      <item id="2" translatable="yes">Name</item>
+                      <item id="3" translatable="yes">No Filter</item>
+                    </items>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">8</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkRadioButton" id="filter_tags_ascending">
+                        <property name="label" translatable="yes">Ascending</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="receives-default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw-indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="filter_tags_descending">
+                        <property name="label" translatable="yes">Descending</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="receives-default">False</property>
+                        <property name="draw-indicator">True</property>
+                        <property name="group">filter_tags_ascending</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">8</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <property name="label" translatable="yes">Sort</property>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">7</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="filter_tags_apply">
+                    <property name="label" translatable="yes">Apply</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <signal name="clicked" handler="on_filter_tags_apply_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">9</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="filter_tags_reset">
+                    <property name="label" translatable="yes">Reset</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="margin-left">3</property>
+                    <property name="margin-right">3</property>
+                    <property name="margin-start">3</property>
+                    <property name="margin-end">3</property>
+                    <property name="margin-top">3</property>
+                    <property name="margin-bottom">3</property>
+                    <signal name="clicked" handler="on_filter_tags_reset_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">9</property>
                   </packing>
                 </child>
                 <child>
@@ -1040,7 +1202,7 @@
                     <property name="margin-end">3</property>
                     <property name="margin-top">3</property>
                     <property name="margin-bottom">3</property>
-                    <property name="active">2</property>
+                    <property name="active">3</property>
                     <items>
                       <item id="0" translatable="yes">Score</item>
                       <item id="1" translatable="yes">Status</item>
@@ -1064,265 +1226,6 @@
                   <packing>
                     <property name="left-attach">0</property>
                     <property name="top-attach">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">2</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="label" translatable="yes">Advanced Search</property>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">4</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="filter_apply">
-                    <property name="label" translatable="yes">Apply</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <signal name="clicked" handler="on_filter_apply_clicked" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">7</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="filter_reset">
-                    <property name="label" translatable="yes">Reset</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <signal name="clicked" handler="on_filter_reset_clicked" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">7</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="label" translatable="yes">Tagging</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                      <attribute name="scale" value="1"/>
-                      <attribute name="underline" value="True"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">8</property>
-                    <property name="width">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="label" translatable="yes">Search</property>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">9</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="label" translatable="yes">Sort</property>
-                  </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">9</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkBox">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="orientation">vertical</property>
-                    <child>
-                      <object class="GtkRadioButton" id="filter_tags_ascending">
-                        <property name="label" translatable="yes">Ascending</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">False</property>
-                        <property name="active">True</property>
-                        <property name="draw-indicator">True</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkRadioButton" id="filter_tags_descending">
-                        <property name="label" translatable="yes">Descending</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">False</property>
-                        <property name="draw-indicator">True</property>
-                        <property name="group">filter_tags_ascending</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">10</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkComboBoxText" id="filter_tags_search_combobox">
-                    <property name="name">search_combobox</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="active">1</property>
-                    <items>
-                      <item id="0" translatable="yes">Description</item>
-                      <item id="2" translatable="yes">Name</item>
-                      <item id="3" translatable="yes">No Filter</item>
-                    </items>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">10</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="filter_tags_apply">
-                    <property name="label" translatable="yes">Apply</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <signal name="clicked" handler="on_filter_tags_apply_clicked" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">11</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="filter_tags_reset">
-                    <property name="label" translatable="yes">Reset</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="margin-left">3</property>
-                    <property name="margin-right">3</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <signal name="clicked" handler="on_filter_tags_reset_clicked" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">11</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="margin-start">3</property>
-                    <property name="margin-end">3</property>
-                    <property name="margin-top">3</property>
-                    <property name="margin-bottom">3</property>
-                    <property name="hscrollbar-policy">external</property>
-                    <property name="vscrollbar-policy">never</property>
-                    <property name="shadow-type">etched-out</property>
-                    <child>
-                      <object class="GtkTextView" id="highlight_textview">
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="margin-left">3</property>
-                        <property name="margin-right">3</property>
-                        <property name="margin-start">3</property>
-                        <property name="margin-end">3</property>
-                        <property name="margin-top">3</property>
-                        <property name="margin-bottom">3</property>
-                        <property name="vexpand">True</property>
-                        <property name="pixels-above-lines">3</property>
-                        <property name="pixels-below-lines">3</property>
-                        <property name="wrap-mode">word-char</property>
-                        <property name="left-margin">3</property>
-                        <property name="right-margin">3</property>
-                        <property name="buffer">highlight_buffer</property>
-                        <property name="accepts-tab">False</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">6</property>
-                    <property name="width">2</property>
                   </packing>
                 </child>
               </object>
@@ -1488,3 +1391,155 @@
     </child>
   </object>
 </interface>
+'''
+TAG_HELP = '''Guide to Searching by Tags
+==========================
+
+## Overview ##
+
+A search using tags takes the form of an expression in the tag selection
+language, the form and usage of which is described in this document.
+
+### Expressions ###
+
+The tag selection language is composed of expressions. An expression consists
+of a series of tag and selection operators applied to those tags. In place of
+a tag, one can also use a nested expression. Nested expressions begin with the
+**{** character and end with the **}** character.
+
+## Tags ##
+
+Tags are little descriptive strings of text that are attached to items to
+describe a quality of that item. Tags begin and end with a non-whitepace
+character, but can contain whitespace inside of them. Tags cannot contain
+a reserved character, unless that character is escaped. Otherwise, the presence
+of a reserved character signifies a boundary of the tag.
+
+### Reserved Characters ###
+
+The set of reserved characters, displayed with each character separated by a
+space, is as follows: **~ , ^ | ? =**
+
+### White Space ###
+
+The term "whitespace" refers to invisible characters such as spaces, tabs,
+newlines, and carriage returns.  
+
+Whitespace characters that are inside of tag names are treated as part of that
+name, and are interpreted as is. For a tag with the identifier **tag name**, the
+space between the words **tag** and **name** is part of the name itself. Thus the
+tag **tag name** is different and distinct from the tag **tag   name**.
+
+Whitespace characters that are between tag names and operators are ignored. So
+given the expression **left | right**, the spaces around **|** are ignored. This
+means that following are all equivalent: **left|right** and **left| right** and
+**  left   |right   **
+
+### Escaping Characters ###
+
+In order to inlcude a reserved character in a tag, that character must be
+preceeded by the escape character **\\** as in the following **tag with\\, comma**,
+in this case, the comma is part of the tag name and it is interpreted as being
+**tag with, comma**. Non-reserved characters preceeded by the escape character
+are treated as is, so **a\p\p\le** is treated the same as **apple**. In order to
+include a literal **\\** in a tag name, it must also be preceeded by an escape
+character as in **literal \\\\ character** which is read as **literal \\ character**
+
+## Operators ##
+
+### Precedence ###
+
+In the absence of braces the operators are evaluated in the following order,
+starting from the lowest number and proceeding to the highest:
+
+	1. ~
+	2. ,
+	3. ^
+	4. |
+	5. ?
+	6. =
+
+### Unary Operators ###
+
+There is only one unary operator, the logical not operator. It takes only one
+operand to its right, in the form **\[operator\] \[operand\]**
+
+#### The Not Operator ####
+
+The Not operator **~** selects the items that are not selected by the expression
+on its right hand side. Items that are selected by the expression on its right
+hand side are filtered out.
+
+### Binary Operators ###
+
+There are five binary operators. They each take two operands, one to the left
+and one to the right, in the form **\[operand A\] \[operator\] \[operand B\]**
+
+Binary operators are either commutative or non-commutative. For a commutative
+operator, the expression  **\[A\] \[operator\] \[B\]** is eqivalent to the
+expression **\[B\] \[operator\] \[B\]** but the same is not true for a
+non-commutative operator.
+
+#### The And Operator ####
+
+The And operator **,** selects items that are selected by both the expression on
+its right hand side as well as the expression on its left hand side. Items only
+selected by one expression or by neither are filtered out.
+
+The And operator is commutative.
+
+### The Exclusive Or Operator ####
+
+The Exclusive Or operator **^** selects items that are selected by either the
+expression on its right hand side or the expression on its left hand side, but
+not by both. Items selected by both expression and items selected by neither
+expression are filtered out.
+
+The Exclusive Or operator is commutative.
+
+#### The Inclusive Or Operator ####
+
+The Inclusive Or operator **|** selects items that are selected by the expression
+on its right hand side, by the expression on its left hand side, or by both of
+these expressions. Items not selected by either expression are filtered out.
+
+The Inclusive Or operator is commutative.
+
+#### The Only If Operator ####
+
+The Only If operator **?** works slightly differently from the other binary
+operators. It selects all items not selected by the expression on its left hand
+side, and for the items that are selected by the expression on its left hand
+side, it selects only those items that are also selected by its right hand side.
+It filters out items that are selected by its left hand side by not its right
+hand side.
+
+The Only If operator is non-commutative.
+
+#### The Equivalence Operator ####
+
+The Equivalence Operator **=** selects items that are either selected by both the
+expression on its right hand side and its left hand side, or by neither of these
+expressions. Items only selected by one side are filtered out.
+
+The Equivalence operator is commutative.
+
+#### The Statement Operator ####
+
+The Statement Operator **;** select the items selected by the expression on its 
+right hand side, ignoring the result of the expression on its left hand side.
+This is useful for use with predicates that have side-effects, as a way to apply
+them specifically for those side-effects.
+
+The Statement Operator is non-commutative.
+
+## Examples ##
+
+The expression **dogs, \{beach? crabs ^ seagulls\}** selects every picture with
+a dog, and for those on a beach, filters out those without any crabs or seagulls
+and those that have both crabs and seagulls.
+
+The expression **fantasy = animation | novel** selects every story that is in
+the fantasy genre that is either an animation or a novel or both and every
+non-fantasy work that is neither an animation nor a novel.
+'''

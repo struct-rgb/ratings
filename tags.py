@@ -2,7 +2,7 @@
 from sys import argv
 from enum import Enum
 
-from typing import Dict, Generic, List, Callable, Optional, Tuple, Any, Type, TypeVar, Union, cast
+from typing import Dict, Generic, List, Callable, Optional, Set, Tuple, Any, Type, TypeVar, Union, cast
 
 class ASTType(Enum):
 	AND   = ","
@@ -46,6 +46,15 @@ pragma: sort;
 
 order: recommendation;
 
+class: file type {
+	png ^ jpg ^ tiff ^ bmp
+}
+
+class: image {
+	is: file type,
+	is: 
+}
+
 """
 
 class Pair(object):
@@ -69,8 +78,13 @@ class Pair(object):
 	provided value unless self.type is ASTType.TAG.
 	"""
 
-	def __init__(self, asttype: ASTType, car: Optional["Pair"] = None, cdr: Optional["Pair"] = None, value: str = "", position: Optional[int] = None):
-
+	def __init__(self,
+		asttype  : ASTType,
+		car      : Optional["Pair"] = None,
+		cdr      : Optional["Pair"] = None,
+		value    : str              = "",
+		position : Optional[int]    = None,
+	):
 		self.type     = asttype		
 		self.position = position
 		self.car      = car
@@ -126,7 +140,7 @@ class Pair(object):
 			return True
 
 		# they must both not be None in this case
-		assert a is not None and b is not None;
+		assert a is not None and b is not None
 
 		# make sure they have the same type
 		if a.type != b.type:
@@ -150,6 +164,7 @@ class Pair(object):
 			strings.append(" " * indent)
 			strings.append("{")
 			strings.append(self.value)
+			# strings.append(f"{self.value} @{self.position}")
 
 		if self.car:
 			strings.append("\n")
@@ -255,17 +270,23 @@ ILLEGAL_AFTER_VALUE = {
 	ASTType.PRED.value,
 }
 
-ESCAPE_CHARACTER = "%"
+ESCAPE_CHARACTER = "\\"
 
-QUOTE_CHARACTER  = "q"
+QUOTE_CHARACTER  = "$"
 
 # QUOTE_CHARACTERS = {"\"", "\'"}
 
 SPECIAL = TERMINALS | {ESCAPE_CHARACTER}
 
-#
-# Escape
-#
+#######
+#        ####   ####    ##   #####  ######
+#       #      #    #  #  #  #    # #
+#####    ####  #      #    # #    # #####
+#            # #      ###### #####  #
+#       #    # #    # #    # #      #
+#######  ####   ####  #    # #      ######
+
+##########################################
 
 TRANSLATION: Dict[int, str] = {}
 
@@ -282,15 +303,21 @@ def escape(source: str) -> str:
 
 	return source.translate(TRANSLATION)
 
-def extract_tags(source: str, delimiter: str = ","):
+def tagset(source: str, delimiter: str = ","):
 	tokens = tokenize(source)
-	return [token for position, token in tokens if token not in TERMINALS]
+	return {token for position, token in tokens if token not in TERMINALS}
 
 #
-# Lexer
-#
+#       ###### #    # ###### #####
+#       #       #  #  #      #    #
+#       #####    ##   #####  #    #
+#       #        ##   #      #####
+#       #       #  #  #      #   #
+####### ###### #    # ###### #    #
 
-def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
+###################################
+
+def eat_quote(source: str, position: int = 0) -> Tuple[int, str]:
 
 	start = position
 
@@ -302,8 +329,8 @@ def eat_quote(source: str, position: int = 0) -> Tuple[int, int, str]:
 	else:
 		position += 1
 
-	depth = 1
-	token = list()
+	depth: int       = 1
+	token: List[str] = list()
 
 	while position < len(source):
 
@@ -405,61 +432,6 @@ def eat_whitespace(source: str, position: int = 0) -> int:
 
 	return position
 
-# def eat_quote(quote: str, source: str, position: int = 0) -> Tuple[int, int, str]:
-
-# 	# this algorithm doesn't work otherwise
-# 	assert len(quote) == 1
-
-# 	token: List[str]
-
-# 	token     = list()
-# 	start     = position
-# 	quote_max = 0
-# 	quote_len = 0
-
-# 	while position < len(source) and source[position] == quote:
-# 		quote_max += 1
-# 		position  += 1
-
-# 	# we must have at least one quote to end the quotation
-# 	assert quote_max >= 1
-
-# 	while position < len(source):
-		
-# 		if source[position] == quote:
-# 			quote_len += 1
-# 			position  += 1
-
-# 			if quote_len == quote_max:
-# 				return start, position, "".join(token)
-			
-# 		else:
-# 			# append any quotes we've skipped
-# 			token.append(quote * quote_len)
-# 			quote_len = 0
-
-# 			# append the current character
-# 			token.append(source[position])
-# 			position += 1
-
-# 			# # check to see if we should escape this character
-# 			# if source[position] == ESCAPE_CHARACTER:
-# 			# 	# skip the escape character
-# 			# 	position += 1
-# 			# 	if position < len(source):
-# 			# 		token.append(source[position])
-# 			# 		position += 1
-# 			# else:
-# 			# 	# append the current character
-# 			# 	token.append(source[position])
-# 			# 	position += 1
-
-# 	raise CompilationError(
-# 		"unclosed quotation",
-# 		position=start,
-# 		source=source,
-# 	)
-
 def tokenize(source: str, position: int = 0) -> List[Tuple[int, str]]:
 
 	tokens   = list()
@@ -490,9 +462,43 @@ def tokenize(source: str, position: int = 0) -> List[Tuple[int, str]]:
 
 	return tokens
 
-#
-# Error Definitions
-#
+def untokenize(tokens : List[Tuple[int, str]]) -> str:
+	"""
+	Takes a list of tokens and positions as produced by tokenize() and
+	returns the original string, less any trailing whitespace.
+	"""
+	length = 0
+	pieces = []
+	
+	for start, token in tokens:
+		if start != 0:
+			diff = start - length
+			pieces.append(" " * diff)
+			length += diff
+		pieces.append(token)
+		length += len(token)
+
+	return "".join(pieces)
+
+#######
+#       #####  #####   ####  #####
+#       #    # #    # #    # #    #
+#####   #    # #    # #    # #    #
+#       #####  #####  #    # #####
+#       #   #  #   #  #    # #   #
+####### #    # #    #  ####  #    #
+
+###################################
+
+######
+#     # ###### ###### # #    # # ##### #  ####  #    #  ####
+#     # #      #      # ##   # #   #   # #    # ##   # #
+#     # #####  #####  # # #  # #   #   # #    # # #  #  ####
+#     # #      #      # #  # # #   #   # #    # #  # #      #
+#     # #      #      # #   ## #   #   # #    # #   ## #    #
+######  ###### #      # #    # #   #   #  ####  #    #  ####
+
+#############################################################
 
 class CompilationError(Exception):
 	"""
@@ -506,10 +512,20 @@ class CompilationError(Exception):
 	the compiler itself, nor during the execution of a compiled expression.
 	"""
 
-	def __init__(self, reason: str, source: Optional[str] = None, position: Optional[int] = None):
+	def __init__(self,
+		reason   : str,
+		position : Optional[int]  = None,
+		token    : Optional[str]  = None,
+		ast      : Optional[Pair] = None,
+		source   : Optional[str]  = None,
+	):
 		self.reason   = reason
-		self.source   = source
 		self.position = position
+		self.token    = token
+		self.ast      = ast
+
+		# used for predicates that take escaped code
+		self.source   = source 
 
 	def __str__(self) -> str:
 		if self.position is not None:
@@ -534,19 +550,26 @@ class CompilationError(Exception):
 	def __repr__(self) -> str:
 		return self.__str__()
 
-#
-# Parser
-#
+######
+#     #   ##   #####   ####  ###### #####
+#     #  #  #  #    # #      #      #    #
+######  #    # #    #  ####  #####  #    #
+#       ###### #####       # #      #####
+#       #    # #   #  #    # #      #   #
+#       #    # #    #  ####  ###### #    #
+
+##########################################
 
 GRAMMAR = \
 """
 <program>   ::= <expr>
-<expr>      ::= <eqv-expr>
-<eqv-expr>  ::= <eqv-expr> "=" <mi-expr>  | <mi-expr>
-<mi-expr>   ::= <mi-expr>  "?" <or-expr>  | <or-expr>
-<or-expr>   ::= <or-expr>  "|" <xor-expr> | <xor-expr>
-<xor-expr>  ::= <xor-expr> "^" <and-expr> | <and-expr>
-<and-expr>  ::= <and-expr> "," <not-expr> | <not-expr>
+<expr>      ::= <stat-expr>
+<stat-expr> ::= <stat-expr> ";" <eqv-expr> | <eqv-expr> (maybe remove this)
+<eqv-expr>  ::= <eqv-expr>  "=" <mi-expr>  | <mi-expr>
+<mi-expr>   ::= <mi-expr>   "?" <or-expr>  | <or-expr>
+<or-expr>   ::= <or-expr>   "|" <xor-expr> | <xor-expr>
+<xor-expr>  ::= <xor-expr>  "^" <and-expr> | <and-expr>
+<and-expr>  ::= <and-expr>  "," <not-expr> | <not-expr>
 <not-expr>  ::= "~" <value> | <value>
 <value>     ::= <sub-expr> | <predicate> | <tag>
 <sub-expr>  ::= "{" <expr> "}"
@@ -606,7 +629,7 @@ def parse_terminal(state: ParserState, asttype: ASTType) -> Optional[Pair]:
 	if state.token != asttype.value:
 		return None
 
-	return Pair(asttype, None, None)
+	return Pair(asttype, None, None, position=state.position)
 
 def parse_value_nesting(state: ParserState) -> Optional[Pair]:
 	"""
@@ -690,6 +713,7 @@ def parse_predicate(state: ParserState) -> Optional[Pair]:
 	if state.token != ASTType.PRED.value:
 		return None
 	else:
+		term_pos = state.position
 		state.to_next()
 
 	# these two are fatal because now this MUST be a predicate
@@ -708,7 +732,7 @@ def parse_predicate(state: ParserState) -> Optional[Pair]:
 	sub_pos = state.position
 	state.to_next()
 
-	return Pair(ASTType.PRED).takes(
+	return Pair(ASTType.PRED, position=term_pos).takes(
 			Pair(ASTType.TAG, value=predicate, position=pred_pos),
 			Pair(ASTType.TAG, value=subject  , position=sub_pos),
 		)
@@ -801,9 +825,15 @@ def parse(tokens: List[Tuple[int, str]]) -> Optional[Pair]:
 	state = ParserState(tokens)
 	return parse_stat_expression(state)
 
-#
-# Codegen
-#
+ #####
+#     #  ####  #####  ######  ####  ###### #    #
+#       #    # #    # #      #    # #      ##   #
+#       #    # #    # #####  #      #####  # #  #
+#       #    # #    # #      #  ### #      #  # #
+#     # #    # #    # #      #    # #      #   ##
+ #####   ####  #####  ######  ####  ###### #    #
+
+ ################################################
 
 BINARY_OPERATORS = {
 	ASTType.OR,
@@ -819,15 +849,21 @@ class Predicate(object):
 	# key for default predicate in symbol table
 	DEFAULT = ""
 
-	def __init__(self, name, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
-		self.action  = action
-		self.parser  = parser
-		self.pure    = pure
-		self.name    = name
+	def __init__(self,
+		name   : str,
+		action : Callable[[Any, Any], bool],
+		readme : str                         = "",
+		parser : Callable[[str], Any]        = str,
+		pure   : bool                        = True,
+	):
+		self.action = action
+		self.parser = parser
+		self.pure   = pure
+		self.name   = name
+		self.readme = readme
 
 	def __call__(self, subject: Any, userdata: Any) -> bool:
 		return self.action(subject, userdata)
-
 
 class PredicateDefinitions(Dict[str, Predicate]):
 
@@ -837,7 +873,7 @@ class PredicateDefinitions(Dict[str, Predicate]):
 		# initialize default predicate
 		self.default(action=action, parser=parser, pure=pure)
 
-	def define(self, name, action: Callable[[Any, Any], bool], parser: Callable[[str], Any] = str, pure: bool = True):
+	def define(self, name, action: Callable[[Any, Any], bool], readme: str = "", parser: Callable[[str], Any] = str, pure: bool = True):
 
 		self[name] = Predicate(name, action=action, parser=parser, pure=pure)
 
@@ -937,9 +973,15 @@ def codegen_walk(pair: Optional[Pair], symbols: Dict[str, Predicate], code: Code
 	else:
 		raise RuntimeError("Codegen walked the AST improperly at \n%s" % pair)
 
-#
-# Compiler
-#
+ #####
+#     #  ####  #    # #####  # #      ###### #####
+#       #    # ##  ## #    # # #      #      #    #
+#       #    # # ## # #    # # #      #####  #    #
+#       #    # #    # #####  # #      #      #####
+#     # #    # #    # #      # #      #      #   #
+ #####   ####  #    # #      # ###### ###### #    #
+
+###################################################
 
 def generate_ast(source: str) -> Optional[Pair]:
 
@@ -954,9 +996,163 @@ def compile(source: str, symbols: Dict[str, Predicate]) -> CodeList:
 
 	return codegen(ast, symbols)
 
-#
-# Evaluation
-#
+ #####
+#     # #   # #    # #####   ##   #    #
+#        # #  ##   #   #    #  #   #  #
+ #####    #   # #  #   #   #    #   ##
+      #   #   #  # #   #   ######   ##
+#     #   #   #   ##   #   #    #  #  #
+ #####    #   #    #   #   #    # #    #
+
+########################################
+
+#     #
+#     # #  ####  #    # #      #  ####  #    # ##### # #    #  ####
+#     # # #    # #    # #      # #    # #    #   #   # ##   # #    #
+####### # #      ###### #      # #      ######   #   # # #  # #
+#     # # #  ### #    # #      # #  ### #    #   #   # #  # # #  ###
+#     # # #    # #    # #      # #    # #    #   #   # #   ## #    #
+#     # #  ####  #    # ###### #  ####  #    #   #   # #    #  ####
+
+####################################################################
+
+ILLEGAL_SEQUENCES = """
+Illegal combos
+BOF, binary, unary, pred, begin, end, tag, EOF
+
+{BOF} {binary, unary, pred, end}
+
+{binary | unary} {binary | pred | end | EOF}
+
+{begin} {binary | pred | EOF}
+
+{end} {unary | begin | pred | tag}
+
+{pred} {binary | unary | pred | begin | end | EOF}
+
+{tag} {unary, begin, tag}
+"""
+
+__HIGHLIGHT_BINARY      = {
+	ASTType.AND.value , ASTType.OR.value   ,
+	ASTType.XOR.value , ASTType.EQV.value  ,
+	ASTType.MI.value  , ASTType.STAT.value ,
+}
+
+__HIGHLIGHT_GROUPING    = {
+	ASTType.BEGIN.value, ASTType.END.value
+}
+
+__HIGHLIGHT_OPERATORS   = __HIGHLIGHT_BINARY | {ASTType.NOT.value}
+
+__HIGHLIGHT_NO_BOF      = __HIGHLIGHT_BINARY | {
+	ASTType.PRED.value, ASTType.END.value
+}
+
+__HIGHLIGHT_NO_OPERATOR = __HIGHLIGHT_BINARY | {
+	ASTType.PRED.value, ASTType.END.value, None
+}
+
+__HIGHLIGHT_NO_BEGIN    = __HIGHLIGHT_BINARY | {
+	ASTType.END.value, ASTType.PRED.value, None
+}
+
+__HIGHLIGHT_OK_END      = __HIGHLIGHT_BINARY | {ASTType.END.value, None}
+
+__HIGHLIGHT_NO_PRED     = __HIGHLIGHT_OPERATORS | {
+	ASTType.PRED.value, ASTType.BEGIN.value, ASTType.END.value, None
+}
+
+__HIGHLIGHT_OK_TAG      = __HIGHLIGHT_BINARY | {
+	ASTType.PRED.value, ASTType.END.value, None
+}
+	
+def __illegal_token_pair(a: str, b: str) -> bool:
+	if   a is None:
+		return b in __HIGHLIGHT_NO_BOF
+	elif a in __HIGHLIGHT_OPERATORS:
+		return b in __HIGHLIGHT_NO_OPERATOR
+	elif a == ASTType.BEGIN.value:
+		return b in __HIGHLIGHT_NO_BEGIN
+	elif a == ASTType.END.value:
+		return b not in __HIGHLIGHT_OK_END
+	elif a == ASTType.PRED.value:
+		return b in __HIGHLIGHT_NO_PRED
+	else:
+		return b not in __HIGHLIGHT_OK_TAG
+
+def highlighting(
+	source  : str,
+	symbols : Optional[Set[str]] = None,
+) -> List[Tuple[int, str, str]]:
+
+	highlights  = []
+
+	tokens = tokenize(source)
+	if not tokens: return highlights
+
+	state = ParserState(tokens)
+	if not state.token:
+		return highlights
+
+	highlighted = False
+
+	def highlight(tag):
+		highlights.append((state.position, state.token, tag))
+
+	if __illegal_token_pair(None, state.token):
+		highlight("error")
+		state.to_next()
+
+	while state.token:
+
+		if __illegal_token_pair(state.token, state.next_token()):
+			if not highlighted:
+				highlight("error")
+			state.to_next()
+			if state.token is not None:
+				highlight("error")
+				highlighted = True
+				continue
+			else:
+				break
+
+		if highlighted:
+			highlighted = False
+			continue
+
+		if   state.token in __HIGHLIGHT_GROUPING:
+			highlight("grouping")
+		elif state.token in __HIGHLIGHT_OPERATORS:
+			highlight("operator")
+		elif state.token == ASTType.PRED.value:
+			highlight("predicate")
+		elif state.next_token() == ASTType.PRED.value:
+			if state.prev_token() == ASTType.PRED.value:
+				highlight("error")
+				state.to_next()
+				if state.token is not None:
+					highlight("error")
+					highlighted = True
+					continue
+			elif symbols is not None and state.token not in symbols:
+				highlight("error")
+			else:
+				highlight("predicate")
+
+		state.to_next()
+
+	return highlights
+
+#######
+#       #    #   ##   #      #    #   ##   ##### #  ####  #    #
+#       #    #  #  #  #      #    #  #  #    #   # #    # ##   #
+#####   #    # #    # #      #    # #    #   #   # #    # # #  #
+#       #    # ###### #      #    # ######   #   # #    # #  # #
+#        #  #  #    # #      #    # #    #   #   # #    # #   ##
+#######   ##   #    # ######  ####  #    #   #   #  ####  #    #
+
+################################################################
 
 def operator_and(stack: List[bool]) -> None:
 	a = stack.pop()
@@ -1034,12 +1230,66 @@ class Filter(object):
 				raise TypeError("Improperly formed CodeList contains element of type %s" % type(operation))
 
 		return self.stack.pop()
+
+######
+#     # #####  ###### #####  #  ####    ##   ##### ######
+#     # #    # #      #    # # #    #  #  #    #   #
+######  #    # #####  #    # # #      #    #   #   #####
+#       #####  #      #    # # #      ######   #   #
+#       #   #  #      #    # # #    # #    #   #   #
+#       #    # ###### #####  #  ####  #    #   #   ######
+
+#########################################################
+
+ #####
+#     # #    # #####  #####   ####  #####  #####
+#       #    # #    # #    # #    # #    #   #
+ #####  #    # #    # #    # #    # #    #   #
+      # #    # #####  #####  #    # #####    #
+#     # #    # #      #      #    # #   #    #
+ #####   ####  #      #       ####  #    #   #
+
+################################################
+
+DEFAULT_TRUTHY_STRINGS = {
+	"true", "t", "y", "yes", "1"
+}
+
+DEFAULT_FALSEY_STRINGS = {
+	"false", "f", "n", "no", "0"
+}
+
+def bool_parser_factory(
+	truthy: Set[str] = DEFAULT_TRUTHY_STRINGS,
+	falsey: Set[str] = DEFAULT_FALSEY_STRINGS,
+) -> Callable[[str], bool]:
+
+	error_string = (
+		  "value must one of ("
+		+ " ".join(truthy)
+		+ ") for true or ("
+		+ " ".join(falsey)
+		+ ") for false"
+	)
+
+	def bool_parser(string: str) -> bool:
+
+		test = string.lower()
+
+		if   test in truthy:
+			return True
+		elif test in falsey:
+			return False
+		else:
+			raise ValueError(error_string)
+
+	return bool_parser
+
+DEFAULT_BOOL_PARSER = bool_parser_factory()
 		
 T = TypeVar('T', bound=Enum)
 
-ESPF_MAP = {
-	ord(" "): ord("_")
-}
+ESPF_MAP = {ord(" "): ord("_")}
 
 def enum_subject_parser_factory(enum: Type[T]) -> Callable[[str], T]:
 	def parser(string: str) -> T:
@@ -1119,20 +1369,20 @@ If count("not") is odd, reduce to "<not> <value>" else reduce to "<value>"
 
 below, x represents the result of a ast branch computation, and y is ~x
 
-a	b	a , b	a | b	a ^ b	a = b	a ? b
-0	0	  0  	  0  	  0  	  1  	  1  
-0	1	  0  	  1  	  1  	  0  	  1  
-1	0	  0  	  1  	  1  	  0  	  0  
-1	1	  1  	  1  	  0  	  1  	  1  
-0	x	  0  	  x  	  x  	  y  	  1
-x	0	  0  	  x  	  x  	  y  	  y
-1	x	  x  	  1  	  y  	  x  	  x
-x	1	  x  	  1  	  y  	  x  	  1
+a	b	a , b	a | b	a ^ b	a = b	a ? b   a ; b
+0	0	  0  	  0  	  0  	  1  	  1       0
+0	1	  0  	  1  	  1  	  0  	  1       1
+1	0	  0  	  1  	  1  	  0  	  0       0
+1	1	  1  	  1  	  0  	  1  	  1       1
+0	x	  0  	  x  	  x  	  y  	  1       x
+x	0	  0  	  x  	  x  	  y  	  y       0
+1	x	  x  	  1  	  y  	  x  	  x       x
+x	1	  x  	  1  	  y  	  x  	  1       1
 
 these can only be applied if x is pure
-x	x	  x  	  x  	  0  	  1  	  x
-x	y 	  0  	  1  	  1  	  0  	  x
-y	x 	  0  	  1  	  1  	  0  	  y
+x	x	  x  	  x  	  0  	  1  	  x       x
+x	y 	  0  	  1  	  1  	  0  	  x       y
+y	x 	  0  	  1  	  1  	  0  	  y       x
 
 ~x -||- y
 
